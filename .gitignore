@@ -39,3 +39,6 @@ next-env.d.ts
 
 # optimized assets output
 public/_optimized/
+
+# editor configs
+.cursor/
