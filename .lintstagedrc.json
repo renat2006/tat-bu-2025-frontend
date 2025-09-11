@@ -1,0 +1,14 @@
+{
+  "*.{js,jsx,ts,tsx}": [
+    "eslint --fix",
+    "prettier --write"
+  ],
+  "public/**/*.{png,jpg,jpeg}": [
+    "node scripts/optimize-images.js"
+  ],
+  "public/**/*.svg": [
+    "svgo --config .svgrc.json"
+  ]
+}
+
+

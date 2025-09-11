@@ -9,7 +9,8 @@
     "optimize:images": "node scripts/optimize-images.js",
     "clean": "node scripts/clean.js",
     "lint": "next lint",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "analyze": "ANALYZE=true next build"
   },
   "dependencies": {
     "react": "19.1.0",
@@ -27,6 +28,10 @@
     "eslint-config-prettier": "^9",
     "eslint-plugin-prettier": "^5",
     "prettier": "^3",
-    "sharp": "^0.33"
+    "sharp": "^0.33",
+    "@next/bundle-analyzer": "^15",
+    "husky": "^9",
+    "lint-staged": "^15",
+    "svgo": "^3"
   }
 }
