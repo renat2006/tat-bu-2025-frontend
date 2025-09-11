@@ -1,0 +1,6 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+Don't write comments in the code, write pure modular code. Explore the structure of the project and break down the logic into files and components and put them in the appropriate folders. Follow the best practices and optimizations when developing on next js + typescript. Try to change files in parts and not create a lot at once. If you delete the logic, check that there are no unnecessary files or garbage left in the code. Write simple and readable code that is ready for production. Try to make informed decisions and change only what you need and not just delete files and code.

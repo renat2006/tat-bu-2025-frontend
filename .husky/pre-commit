@@ -1,0 +1,7 @@
+npm run clean
+npm run optimize:images
+npx --yes lint-staged
+npm run lint
+npm run build
+
+
