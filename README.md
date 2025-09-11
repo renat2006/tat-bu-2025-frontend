@@ -2,6 +2,7 @@
 
 ![CI](https://github.com/renat2006/tat-bu-2025-frontend/actions/workflows/ci.yml/badge.svg)
 ![Release](https://img.shields.io/github/v/release/renat2006/tat-bu-2025-frontend)
+[![Vercel Deploy](https://deploy-badge.vercel.app/vercel/tat-bu-2025-frontend)](https://vercel.com/renat2006s-projects/tat-bu-2025-frontend)
 
 Фронтенд AR приложения для хакатона Тат. Бу
 
