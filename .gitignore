@@ -4,6 +4,10 @@
 .pnp.js
 .yarn/install-state.gz
 
+# npm cache
+.npm
+.npm-cache/
+
 # testing
 /coverage
 
