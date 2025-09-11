@@ -55,4 +55,15 @@ jobs:
           name: Release ${{ steps.version.outputs.VERSION }}
           generate_release_notes: true
           prerelease: ${{ steps.version.outputs.PRERELEASE == 'true' }}
+          files: |
+            build-artifacts/**
+
+      - name: Upload build artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: |
+            .next/**
+            out/**
 
