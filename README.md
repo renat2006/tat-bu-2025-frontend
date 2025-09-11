@@ -1,5 +1,8 @@
 ## Frontend · Next.js + TypeScript
 
+![CI](https://github.com/renat2006/tat-bu-2025-frontend/actions/workflows/ci.yml/badge.svg)
+![Release](https://img.shields.io/github/v/release/renat2006/tat-bu-2025-frontend)
+
 Фронтенд AR приложения для хакатона Тат. Бу
 
 ## Стек
