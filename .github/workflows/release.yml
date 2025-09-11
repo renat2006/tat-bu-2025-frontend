@@ -1,0 +1,58 @@
+name: Release
+
+on:
+  push:
+    branches: [ main, dev ]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Git user
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Compute version (CalVer)
+        id: version
+        run: |
+          BRANCH=${GITHUB_REF##*/}
+          DATE=$(date -u +'%Y.%m.%d-%H%M%S')
+          if [ "$BRANCH" = "dev" ]; then
+            echo "VERSION=${DATE}-dev.${GITHUB_RUN_NUMBER}" >> $GITHUB_OUTPUT
+            echo "PRERELEASE=true" >> $GITHUB_OUTPUT
+          else
+            echo "VERSION=${DATE}" >> $GITHUB_OUTPUT
+            echo "PRERELEASE=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create and push tag
+        run: |
+          VERSION=${{ steps.version.outputs.VERSION }}
+          if git rev-parse -q --verify "refs/tags/${VERSION}" >/dev/null; then
+            echo "Tag ${VERSION} already exists, skipping tag creation"
+          else
+            git tag -a "${VERSION}" -m "Release ${VERSION}"
+            git push origin "${VERSION}"
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.VERSION }}
+          name: Release ${{ steps.version.outputs.VERSION }}
+          generate_release_notes: true
+          prerelease: ${{ steps.version.outputs.PRERELEASE == 'true' }}
+
