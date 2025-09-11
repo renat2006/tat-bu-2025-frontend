@@ -11,7 +11,8 @@
     "lint": "eslint . --max-warnings=0",
     "format": "prettier --write .",
     "analyze": "ANALYZE=true next build",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "commitlint": "commitlint --edit"
   },
   "dependencies": {
     "next": "15.5.3",
@@ -19,6 +20,8 @@
     "react-dom": "19.1.0"
   },
   "devDependencies": {
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.35.0",
     "@next/bundle-analyzer": "^15",
