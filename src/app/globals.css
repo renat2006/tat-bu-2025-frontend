@@ -5,3 +5,17 @@
   --color-surface: #F6F4F4;
   --color-ink: #111217;
 }
+
+body {
+  background-color: #0b0c10;
+  background-image:
+    radial-gradient(1200px 800px at 20% 0%, rgba(188, 251, 108, 0.08), transparent 50%),
+    radial-gradient(1000px 700px at 80% 20%, rgba(255, 255, 255, 0.05), transparent 55%),
+    linear-gradient(180deg, #0b0c10 0%, #0b0c10 100%);
+  color: #EDEDED;
+}
+
+::selection {
+  background: rgba(188, 251, 108, 0.25);
+  color: #EDEDED;
+}
