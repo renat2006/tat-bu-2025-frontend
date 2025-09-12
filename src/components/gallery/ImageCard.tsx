@@ -32,6 +32,7 @@ const ImageCardComponent = ({ data, isTop = false }: ImageCardProps) => {
         sizes="(max-width: 640px) 90vw, 480px"
         priority={isTop}
         placeholder="empty"
+        unoptimized
         className="object-cover"
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
