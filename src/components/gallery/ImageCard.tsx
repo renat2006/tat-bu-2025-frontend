@@ -1,6 +1,9 @@
+'use client'
+
 import { memo, useState } from 'react'
 import Image from 'next/image'
 import { Bed, Share, Star } from 'lucide-react'
+import { motion } from 'framer-motion'
 
 interface ImageCardProps {
   data: {
