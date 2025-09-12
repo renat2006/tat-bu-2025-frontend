@@ -12,23 +12,26 @@ interface ImageCardProps {
     image: string
   }
   isTop?: boolean
+  preload?: boolean
   onLoaded?: () => void
 }
 
 const ImageCardComponent = ({
   data,
   isTop = false,
+  preload = false,
   onLoaded,
 }: ImageCardProps) => {
   const [loaded, setLoaded] = useState(false)
 
   return (
     <div
-      className="relative w-full h-full rounded-[48px] overflow-hidden shadow-2xl"
+      className="relative w-full h-full rounded-[48px] overflow-hidden shadow-2xl will-change-transform [transform:translateZ(0)]"
       style={{
         maskImage: `url("data:image/svg+xml,%3csvg width='350' height='480' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M48 0L121 0C141 0 141 24 175 24C209 24 209 0 229 0L302 0A48 48 0 01350 48L350 432A48 48 0 01302 480L48 480A48 48 0 010 432L0 48A48 48 0 0148 0Z' fill='white'/%3e%3c/svg%3e")`,
         WebkitMaskImage: `url("data:image/svg+xml,%3csvg width='350' height='480' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M48 0L121 0C141 0 141 24 175 24C209 24 209 0 229 0L302 0A48 48 0 01350 48L350 432A48 48 0 01302 480L48 480A48 48 0 010 432L0 48A48 48 0 0148 0Z' fill='white'/%3e%3c/svg%3e")`,
         maskSize: '100% 100%',
+        contain: 'layout paint size style',
       }}
     >
       <div
@@ -39,9 +42,10 @@ const ImageCardComponent = ({
         alt={data.title}
         fill
         sizes="(max-width: 640px) 92vw, (max-width: 1024px) 720px, 960px"
-        priority={isTop}
+        priority={isTop || preload}
         placeholder="empty"
-        className="object-cover"
+        className="object-cover will-change-transform [transform:translateZ(0)]"
+        draggable={false}
         onLoad={() => {
           setLoaded(true)
           onLoaded?.()

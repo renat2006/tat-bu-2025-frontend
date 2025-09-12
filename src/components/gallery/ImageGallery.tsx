@@ -8,12 +8,16 @@ import { MoveVertical } from 'lucide-react'
 
 const CARD_OFFSET = 20
 const SCALE_FACTOR = 0.07
-const MAX_VISIBLE = 4
+const MAX_VISIBLE = 5
+
+// Reusable SVG mask for the card notch to keep shape during animations
+const MASK_SVG = `url("data:image/svg+xml,%3csvg width='350' height='480' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M48 0L121 0C141 0 141 24 175 24C209 24 209 0 229 0L302 0A48 48 0 01350 48L350 432A48 48 0 01302 480L48 480A48 48 0 010 432L0 48A48 48 0 0148 0Z' fill='white'/%3e%3c/svg%3e")`
 
 export const ImageGallery = () => {
-  const [cards, setCards] = useState(mockImages)
+  const items = useMemo(() => mockImages, [])
+  const [current, setCurrent] = useState(0)
   const [showHint, setShowHint] = useState(false)
-  const [visibleCount, setVisibleCount] = useState(2)
+  const [visibleCount, setVisibleCount] = useState(3)
 
   useEffect(() => {
     try {
@@ -28,17 +32,20 @@ export const ImageGallery = () => {
     } catch {}
   }, [])
 
-  const visibleCards = useMemo(
-    () => cards.slice(0, Math.min(visibleCount, MAX_VISIBLE)),
-    [cards, visibleCount],
-  )
+  const windowItems = useMemo(() => {
+    const result: Array<{ id: number; idx: number }> = []
+    const total = items.length
+    const count = Math.min(visibleCount, MAX_VISIBLE)
+    for (let pos = 0; pos < count; pos += 1) {
+      const idx = (current + pos) % total
+      result.push({ id: items[idx].id as number, idx })
+    }
+    return result
+  }, [items, current, visibleCount])
 
-  const nextCard = () => setCards((prev) => [...prev.slice(1), prev[0]])
+  const nextCard = () => setCurrent((c) => (c + 1) % items.length)
   const prevCard = () =>
-    setCards((prev) => [
-      prev[prev.length - 1],
-      ...prev.slice(0, prev.length - 1),
-    ])
+    setCurrent((c) => (c - 1 + items.length) % items.length)
 
   const handleDragEnd = (_event: unknown, info: { offset: { y: number } }) => {
     if (showHint) {
@@ -54,35 +61,39 @@ export const ImageGallery = () => {
     }
   }
 
-  const handleCardLoaded = (index: number) => {
-    if (index >= visibleCount - 1 && visibleCount < MAX_VISIBLE) {
+  const handleCardLoaded = (pos: number) => {
+    if (pos >= visibleCount - 1 && visibleCount < MAX_VISIBLE) {
       setVisibleCount((c) => Math.min(c + 1, MAX_VISIBLE))
     }
   }
 
   return (
-    <div className="relative w-full h-[560px] flex items-center justify-center will-change-transform [transform:translateZ(0)] overflow-hidden">
+    <div className="relative w-full h-[600px] md:h-[640px] flex items-center justify-center will-change-transform [transform:translateZ(0)] overflow-hidden">
       <AnimatePresence initial={false}>
-        {visibleCards.map((card, index) => {
-          const isTopCard = index === 0
+        {windowItems.map((it, pos) => {
+          const card = items[it.idx]
+          const isTopCard = pos === 0
 
           return (
             <motion.div
-              key={`${card.id}-${index}`}
-              className="absolute w-[min(680px,calc(100%-24px))] h-full"
+              key={card.id}
+              className={`absolute w-[min(740px,calc(100%-16px))] h-full will-change-transform [transform:translateZ(0)] ${isTopCard ? '' : 'pointer-events-none'}`}
               style={{
                 transformOrigin: 'top center',
-                zIndex: visibleCards.length - index,
+                zIndex: windowItems.length - pos,
                 willChange: 'transform, opacity',
                 backfaceVisibility: 'hidden',
                 WebkitBackfaceVisibility: 'hidden',
+                maskImage: MASK_SVG as unknown as string,
+                WebkitMaskImage: MASK_SVG as unknown as string,
+                maskSize: '100% 100%',
               }}
               initial={false}
               animate={{
-                y: index * CARD_OFFSET,
-                scale: 1 - index * SCALE_FACTOR,
-                opacity: 1 - index * 0.06,
-                rotate: index === 0 ? 0 : index % 2 === 0 ? -0.6 : 0.6,
+                y: pos * CARD_OFFSET,
+                scale: 1 - pos * SCALE_FACTOR,
+                opacity: 1 - pos * 0.06,
+                rotate: pos > 0 ? (pos % 2 === 0 ? -0.6 : 0.6) : 0,
               }}
               transition={{
                 type: 'spring',
@@ -90,23 +101,18 @@ export const ImageGallery = () => {
                 damping: 26,
                 mass: 0.9,
               }}
-              whileDrag={{ scale: isTopCard ? 0.98 : undefined }}
+              whileDrag={{ scale: isTopCard ? 0.985 : undefined }}
               drag={isTopCard ? 'y' : false}
               dragConstraints={{ top: 0, bottom: 0 }}
               dragElastic={0.14}
               dragMomentum={false}
               onDragEnd={handleDragEnd}
-              exit={{
-                y: 240,
-                opacity: 0,
-                rotate: 1.5,
-                transition: { type: 'spring', stiffness: 260, damping: 28 },
-              }}
             >
               <ImageCard
                 data={card}
                 isTop={isTopCard}
-                onLoaded={() => handleCardLoaded(index)}
+                preload={pos <= 2}
+                onLoaded={() => handleCardLoaded(pos)}
               />
             </motion.div>
           )
