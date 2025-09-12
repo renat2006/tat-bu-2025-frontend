@@ -8,7 +8,6 @@ import { MoveVertical } from 'lucide-react'
 
 const CARD_OFFSET = 20
 const SCALE_FACTOR = 0.07
-const MAX_VISIBLE = 5
 
 // Reusable SVG mask for the card notch to keep shape during animations
 const MASK_SVG = `url("data:image/svg+xml,%3csvg width='350' height='480' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M48 0L121 0C141 0 141 24 175 24C209 24 209 0 229 0L302 0A48 48 0 01350 48L350 432A48 48 0 01302 480L48 480A48 48 0 010 432L0 48A48 48 0 0148 0Z' fill='white'/%3e%3c/svg%3e")`
@@ -17,7 +16,6 @@ export const ImageGallery = () => {
   const items = useMemo(() => mockImages, [])
   const [current, setCurrent] = useState(0)
   const [showHint, setShowHint] = useState(false)
-  const [visibleCount, setVisibleCount] = useState(3)
 
   useEffect(() => {
     try {
@@ -35,13 +33,12 @@ export const ImageGallery = () => {
   const windowItems = useMemo(() => {
     const result: Array<{ id: number; idx: number }> = []
     const total = items.length
-    const count = Math.min(visibleCount, MAX_VISIBLE)
-    for (let pos = 0; pos < count; pos += 1) {
+    for (let pos = 0; pos < total; pos += 1) {
       const idx = (current + pos) % total
       result.push({ id: items[idx].id as number, idx })
     }
     return result
-  }, [items, current, visibleCount])
+  }, [items, current])
 
   const nextCard = () => setCurrent((c) => (c + 1) % items.length)
   const prevCard = () =>
@@ -58,12 +55,6 @@ export const ImageGallery = () => {
       nextCard()
     } else if (info.offset.y < -70) {
       prevCard()
-    }
-  }
-
-  const handleCardLoaded = (pos: number) => {
-    if (pos >= visibleCount - 1 && visibleCount < MAX_VISIBLE) {
-      setVisibleCount((c) => Math.min(c + 1, MAX_VISIBLE))
     }
   }
 
@@ -97,9 +88,9 @@ export const ImageGallery = () => {
               }}
               transition={{
                 type: 'spring',
-                stiffness: 260,
-                damping: 26,
-                mass: 0.9,
+                stiffness: 250,
+                damping: 28,
+                mass: 1,
               }}
               whileDrag={{ scale: isTopCard ? 0.985 : undefined }}
               drag={isTopCard ? 'y' : false}
@@ -108,12 +99,7 @@ export const ImageGallery = () => {
               dragMomentum={false}
               onDragEnd={handleDragEnd}
             >
-              <ImageCard
-                data={card}
-                isTop={isTopCard}
-                preload={pos <= 2}
-                onLoaded={() => handleCardLoaded(pos)}
-              />
+              <ImageCard data={card} isTop={isTopCard} preload />
             </motion.div>
           )
         })}
