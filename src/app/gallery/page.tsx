@@ -2,12 +2,14 @@ import { ImageGallery } from '@/components/gallery/ImageGallery'
 
 export default function GalleryPage() {
   return (
-    <main className="min-h-screen py-16">
-      <div className="container mx-auto">
+    <main className="min-h-screen">
+      <div className="mx-auto max-w-5xl px-4 pt-12 pb-28">
         <h1 className="text-4xl font-bold text-center mb-8 text-white">
           Discover your next stay
         </h1>
-        <ImageGallery />
+        <div className="flex items-center justify-center">
+          <ImageGallery />
+        </div>
       </div>
     </main>
   )
