@@ -7,7 +7,7 @@
     "node scripts/optimize-images.js"
   ],
   "public/**/*.svg": [
-    "svgo --config=svgo.config.json"
+    "svgo --config=svgo.config.mjs"
   ]
 }
 
