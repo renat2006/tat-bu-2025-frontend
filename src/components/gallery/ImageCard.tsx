@@ -22,7 +22,6 @@ const ImageCardComponent = ({ data, isTop = false }: ImageCardProps) => {
         maskImage: `url("data:image/svg+xml,%3csvg width='350' height='480' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M48 0L121 0C141 0 141 24 175 24C209 24 209 0 229 0L302 0A48 48 0 01350 48L350 432A48 48 0 01302 480L48 480A48 48 0 010 432L0 48A48 48 0 0148 0Z' fill='white'/%3e%3c/svg%3e")`,
         WebkitMaskImage: `url("data:image/svg+xml,%3csvg width='350' height='480' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M48 0L121 0C141 0 141 24 175 24C209 24 209 0 229 0L302 0A48 48 0 01350 48L350 432A48 48 0 01302 480L48 480A48 48 0 010 432L0 48A48 48 0 0148 0Z' fill='white'/%3e%3c/svg%3e")`,
         maskSize: '100% 100%',
-        WebkitMaskSize: '100% 100%',
       }}
     >
       <Image
@@ -32,7 +31,6 @@ const ImageCardComponent = ({ data, isTop = false }: ImageCardProps) => {
         sizes="(max-width: 640px) 90vw, 480px"
         priority={isTop}
         placeholder="empty"
-        unoptimized
         className="object-cover"
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
