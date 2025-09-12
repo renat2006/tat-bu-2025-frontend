@@ -1,19 +1,19 @@
 'use client'
 import { Home, Images, Camera, BookOpen, User } from 'lucide-react'
 import Link from 'next/link'
-import { useState } from 'react'
+import { usePathname } from 'next/navigation'
 import clsx from 'clsx'
 
 const navItems = [
-  { id: 'home', href: '#', icon: Home },
-  { id: 'albums', href: '#', icon: Images },
+  { id: 'home', href: '/', icon: Home },
+  { id: 'albums', href: '/gallery', icon: Images },
   { id: 'search', href: '#', icon: Camera, emphasized: true },
   { id: 'learn', href: '#', icon: BookOpen },
   { id: 'profile', href: '#', icon: User },
 ]
 
 export default function AppBar() {
-  const [active, setActive] = useState('home')
+  const pathname = usePathname() || '/'
 
   return (
     <nav className="fixed bottom-4 left-0 right-0 z-50 md:hidden">
@@ -31,30 +31,37 @@ export default function AppBar() {
 
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="flex items-center justify-between w-full px-4">
-            {navItems.map((item) => (
-              <Link
-                key={item.id}
-                href={item.href}
-                onClick={() => setActive(item.id)}
-                className={clsx(
-                  'flex items-center justify-center rounded-full',
-                  item.emphasized
-                    ? 'h-18 w-18 -mt-18 ring-1 ring-white/20 bg-white'
-                    : 'h-12 w-12',
-                )}
-              >
-                <item.icon
+            {navItems.map((item) => {
+              const isActive =
+                (item.href === '/' && pathname === '/') ||
+                (item.href !== '/' && pathname.startsWith(item.href))
+
+              return (
+                <Link
+                  key={item.id}
+                  href={item.href}
                   className={clsx(
-                    item.emphasized ? 'h-[30px] w-[30px]' : 'h-[26px] w-[26px]',
-                    active === item.id
-                      ? '[color:var(--color-brand-green)]'
-                      : item.emphasized
-                        ? 'text-black/80'
-                        : 'text-white/80',
+                    'flex items-center justify-center rounded-full',
+                    item.emphasized
+                      ? 'h-18 w-18 -mt-18 ring-1 ring-white/20 bg-white'
+                      : 'h-12 w-12',
                   )}
-                />
-              </Link>
-            ))}
+                >
+                  <item.icon
+                    className={clsx(
+                      item.emphasized
+                        ? 'h-[30px] w-[30px]'
+                        : 'h-[26px] w-[26px]',
+                      isActive
+                        ? '[color:var(--color-brand-green)]'
+                        : item.emphasized
+                          ? 'text-black/80'
+                          : 'text-white/80',
+                    )}
+                  />
+                </Link>
+              )
+            })}
           </div>
         </div>
       </div>

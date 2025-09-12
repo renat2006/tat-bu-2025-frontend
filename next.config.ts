@@ -4,6 +4,7 @@ import bundleAnalyzer from '@next/bundle-analyzer'
 const nextConfig: NextConfig = {
   images: {
     formats: ['image/avif', 'image/webp'],
+    remotePatterns: [{ protocol: 'https', hostname: 'images.unsplash.com' }],
   },
   headers: async () => [
     {
@@ -20,5 +21,7 @@ const nextConfig: NextConfig = {
     },
   ],
 }
-const withBundleAnalyzer = bundleAnalyzer({ enabled: process.env.ANALYZE === 'true' })
+const withBundleAnalyzer = bundleAnalyzer({
+  enabled: process.env.ANALYZE === 'true',
+})
 export default withBundleAnalyzer(nextConfig)
