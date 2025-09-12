@@ -18,7 +18,7 @@ export default function Header() {
           >
             <Bell className="h-6 w-6 text-white/80" />
           </button>
-          <button className="-ml-3 inline-flex h-15 w-15 overflow-hidden rounded-full ring-1 ring-white/10">
+          <button className="-ml-3 z-2 inline-flex h-13 w-13 overflow-hidden rounded-full ring-1 ring-white/10">
             <Image
               src="/avatars/man-avatar-3.png"
               alt="User"
