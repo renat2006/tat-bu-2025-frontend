@@ -1,4 +1,4 @@
-import { memo } from 'react'
+import { memo, useState } from 'react'
 import Image from 'next/image'
 import { Bed, Share, Star } from 'lucide-react'
 
@@ -12,9 +12,16 @@ interface ImageCardProps {
     image: string
   }
   isTop?: boolean
+  onLoaded?: () => void
 }
 
-const ImageCardComponent = ({ data, isTop = false }: ImageCardProps) => {
+const ImageCardComponent = ({
+  data,
+  isTop = false,
+  onLoaded,
+}: ImageCardProps) => {
+  const [loaded, setLoaded] = useState(false)
+
   return (
     <div
       className="relative w-full h-full rounded-[48px] overflow-hidden shadow-2xl"
@@ -24,17 +31,28 @@ const ImageCardComponent = ({ data, isTop = false }: ImageCardProps) => {
         maskSize: '100% 100%',
       }}
     >
+      <div
+        className={`absolute inset-0 bg-neutral-800 ${loaded ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300 animate-pulse`}
+      />
       <Image
         src={data.image}
         alt={data.title}
         fill
-        sizes="(max-width: 640px) 90vw, 480px"
+        sizes="(max-width: 640px) 92vw, (max-width: 1024px) 720px, 960px"
         priority={isTop}
         placeholder="empty"
         className="object-cover"
+        onLoad={() => {
+          setLoaded(true)
+          onLoaded?.()
+        }}
       />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
-      <div className="absolute top-0 left-0 right-0 p-8 text-white">
+      <div
+        className={`absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20 transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+      />
+      <div
+        className={`absolute top-0 left-0 right-0 p-8 text-white transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+      >
         <div className="flex justify-between items-start">
           <div>
             <h2 className="text-4xl font-bold">{data.title}</h2>
@@ -61,7 +79,9 @@ const ImageCardComponent = ({ data, isTop = false }: ImageCardProps) => {
           </div>
         </div>
       </div>
-      <div className="absolute bottom-0 left-0 right-0 p-8 text-white">
+      <div
+        className={`absolute bottom-0 left-0 right-0 p-8 text-white transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+      >
         <div className="flex gap-4 items-center bg-black/30 backdrop-blur-md rounded-full p-3">
           <div className="bg-black/50 rounded-full px-4 py-2 text-lg font-semibold">
             ${data.price}
