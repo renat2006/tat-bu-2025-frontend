@@ -1,25 +1,21 @@
 'use client'
 
-import { useMemo } from 'react'
 import { AnimatePresence } from 'framer-motion'
-import { ImageDetail } from './ImageDetail'
 import { useImageDetailStore } from '@/stores/imageDetailStore'
-import { mockImages } from '@/mocks/images'
+import { ImageDetail } from './ImageDetail'
+import { mockAlbums } from '@/mocks/albums'
 
 export const ImageDetailController = () => {
-  const { selectedId, selectId } = useImageDetailStore()
-  const items = useMemo(() => mockImages, [])
-
-  const selectedCardData = useMemo(() => {
-    return selectedId !== null
-      ? items.find((item) => item.id === selectedId)
-      : null
-  }, [selectedId, items])
+  const { selectedAlbum, selectAlbum } = useImageDetailStore()
 
   return (
     <AnimatePresence>
-      {selectedCardData && (
-        <ImageDetail data={selectedCardData} onClose={() => selectId(null)} />
+      {selectedAlbum && (
+        <ImageDetail
+          key={selectedAlbum.id}
+          data={selectedAlbum}
+          onClose={() => selectAlbum(null)}
+        />
       )}
     </AnimatePresence>
   )

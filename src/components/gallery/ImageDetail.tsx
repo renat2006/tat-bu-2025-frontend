@@ -1,66 +1,60 @@
 'use client'
 
-import { motion, useScroll, useTransform } from 'framer-motion'
+import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
-import type { StaticImageData } from 'next/image'
-import {
-  ArrowLeft,
-  Bookmark,
-  Share,
-  Star,
-  Bed,
-  DollarSign,
-  Telescope,
-  Coffee,
-  Leaf,
-} from 'lucide-react'
-import { useRef } from 'react'
+import { ArrowLeft, Languages } from 'lucide-react'
+import { useRef, useState } from 'react'
+import { Album } from '@/types/gallery'
 
 interface ImageDetailProps {
-  data: {
-    title: string
-    location: string
-    price: number
-    rating: number
-    beds: number
-    image: string | StaticImageData
-  }
+  data: Album
   onClose: () => void
 }
 
-const detailCards = [
-  {
-    icon: DollarSign,
-    title: '$94/night',
-    subtitle: 'Cost',
-    color: 'bg-green-400/80 text-green-950',
-  },
-  {
-    icon: Telescope,
-    title: 'Mesmerizing',
-    subtitle: 'View',
-    color: 'bg-white/10 text-white',
-  },
-  {
-    icon: Coffee,
-    title: 'Delicious',
-    subtitle: 'Breakfast',
-    color: 'bg-white/10 text-white',
-  },
-  {
-    icon: Leaf,
-    title: 'Eco-friendly',
-    subtitle: 'Stay',
-    color: 'bg-white/10 text-white',
-  },
+const cardColors = [
+  'bg-lime-400/80 text-lime-950',
+  'bg-sky-400/80 text-sky-950',
+  'bg-amber-400/80 text-amber-950',
+  'bg-violet-400/80 text-violet-950',
 ]
 
+const variants = {
+  enter: (direction: number) => ({
+    x: direction > 0 ? 1000 : -1000,
+    opacity: 0,
+  }),
+  center: {
+    zIndex: 1,
+    x: 0,
+    opacity: 1,
+  },
+  exit: (direction: number) => ({
+    zIndex: 0,
+    x: direction < 0 ? 1000 : -1000,
+    opacity: 0,
+  }),
+}
+
 export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
+  const [[page, direction], setPage] = useState([0, 0])
+
   const scrollRef = useRef<HTMLDivElement>(null)
   const { scrollY } = useScroll({ container: scrollRef })
 
   const y = useTransform(scrollY, [0, 100], [0, -50], { clamp: false })
   const headerOpacity = useTransform(scrollY, [0, 50], [0, 1])
+
+  const paginate = (newDirection: number) => {
+    setPage([page + newDirection, newDirection])
+  }
+
+  const changeImage = (index: number) => {
+    const newDirection = index > page ? 1 : -1
+    setPage([index, newDirection])
+  }
+
+  const currentIndex =
+    ((page % data.images.length) + data.images.length) % data.images.length
 
   return (
     <motion.div
@@ -70,14 +64,14 @@ export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
       animate={{ opacity: 1, transition: { duration: 0.3, ease: 'easeOut' } }}
       exit={{ opacity: 0, transition: { duration: 0.3, ease: 'easeIn' } }}
     >
-      <header className="fixed top-0 left-0 right-0 p-4 md:p-6 flex items-center justify-between text-white z-20">
+      <header className="fixed top-0 left-0 right-0 p-4 md:p-6 flex items-center justify-between text-white z-30">
         <motion.div
           className="absolute inset-0 bg-black/20 backdrop-blur-lg"
           style={{ opacity: headerOpacity }}
         />
         <button
           onClick={onClose}
-          className="relative w-12 h-12 rounded-full bg-white/10 flex items-center justify-center"
+          className="relative w-12 h-12 rounded-full bg-black/20 backdrop-blur-md flex items-center justify-center"
         >
           <ArrowLeft size={20} />
         </button>
@@ -85,72 +79,115 @@ export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
           style={{ opacity: headerOpacity }}
           className="relative font-semibold"
         >
-          {data.title} Hotel
+          {data.title}
         </motion.span>
-        <div className="flex gap-2 relative">
-          <button className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-white">
-            <Share size={20} />
-          </button>
-          <button className="w-12 h-12 rounded-full bg-black/50 flex items-center justify-center text-white">
-            <Bookmark size={20} />
-          </button>
-        </div>
+        <div className="w-12 h-12" />
       </header>
 
       <div className="relative w-full h-[65vh] md:h-[75vh]">
-        <Image
-          src={data.image}
-          alt={data.title}
-          fill
-          priority
-          className="object-cover"
-          draggable={false}
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
-      </div>
-
-      <motion.div
-        style={{ y }}
-        className="absolute inset-0 p-4 md:p-6 flex flex-col justify-end h-[65vh] md:h-[75vh] pointer-events-none"
-      >
-        <div className="text-white">
-          <h1 className="text-5xl md:text-6xl font-bold">{data.title}</h1>
-          <p className="text-white/80">{data.location}</p>
-        </div>
-      </motion.div>
-
-      <div className="relative z-10 p-4 md:p-6 bg-black">
-        <div className="flex gap-2 items-center bg-neutral-900/50 rounded-full p-2 text-white text-sm mb-8 w-fit">
-          <span className="bg-neutral-800 rounded-full px-3 py-1 font-semibold">
-            ${data.price}
-          </span>
-          <span className="flex items-center gap-1 px-2">
-            <Star size={16} className="text-yellow-400" />
-            {data.rating}/5
-          </span>
-          <span className="flex items-center gap-1 px-2">
-            <Bed size={16} />
-            {data.beds} bed
-          </span>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4 pb-24">
-          {detailCards.map((card, index) => (
-            <div
-              key={index}
-              className={`rounded-3xl p-4 ${card.color} backdrop-blur-lg aspect-square flex flex-col justify-between`}
+        <div className="absolute inset-0 overflow-hidden">
+          <AnimatePresence initial={false} custom={direction}>
+            <motion.div
+              key={page}
+              custom={direction}
+              variants={variants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{
+                x: { type: 'spring', stiffness: 300, damping: 30 },
+                opacity: { duration: 0.2 },
+              }}
+              className="absolute h-full w-full"
+              drag="x"
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={1}
+              onDragEnd={(e, { offset, velocity }) => {
+                const swipe = Math.abs(offset.x) * velocity.x
+                if (swipe < -10000) {
+                  paginate(1)
+                } else if (swipe > 10000) {
+                  paginate(-1)
+                }
+              }}
             >
-              <div>
-                <div className="w-10 h-10 rounded-full bg-black/20 flex items-center justify-center mb-2">
-                  <card.icon size={20} />
-                </div>
-              </div>
-              <div>
-                <p className="text-xl font-semibold">{card.title}</p>
-                <p className="opacity-70">{card.subtitle}</p>
+              <Image
+                src={data.images[currentIndex].src}
+                alt={data.title}
+                fill
+                priority
+                className="object-cover"
+                draggable={false}
+              />
+            </motion.div>
+          </AnimatePresence>
+        </div>
+
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none z-10" />
+
+        <motion.div
+          style={{ y }}
+          className="absolute inset-0 p-4 md:p-6 pb-28 flex flex-col justify-end pointer-events-none z-20"
+        >
+          <div className="text-white">
+            <h1 className="text-5xl md:text-6xl font-bold">{data.title}</h1>
+            <p className="text-white/80">
+              Image {currentIndex + 1} of {data.images.length}
+            </p>
+          </div>
+        </motion.div>
+
+        {data.images.length > 1 && (
+          <div className="absolute bottom-4 left-0 right-0 z-20">
+            <div className="px-4">
+              <div className="flex space-x-2 overflow-x-auto pb-2">
+                {data.images.map((image, index) => (
+                  <button
+                    key={index}
+                    onClick={() => changeImage(index)}
+                    className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0"
+                  >
+                    <Image
+                      src={image.src}
+                      alt={`thumbnail ${index + 1}`}
+                      width={80}
+                      height={80}
+                      className={`object-cover w-full h-full transition-all duration-300 ${
+                        currentIndex === index
+                          ? 'ring-2 ring-white scale-105'
+                          : 'opacity-60 hover:opacity-100'
+                      }`}
+                    />
+                  </button>
+                ))}
               </div>
             </div>
-          ))}
+          </div>
+        )}
+      </div>
+
+      <div className="relative z-10 p-4 md:p-6">
+        <div className="flex items-center gap-3 mb-4 text-white">
+          <Languages size={20} />
+          <h3 className="text-lg font-semibold">Vocabulary from this memory</h3>
+        </div>
+        <div className="grid grid-cols-2 gap-4 pb-24">
+          {data.images[currentIndex].words.length > 0 ? (
+            data.images[currentIndex].words.map((word, index) => (
+              <div
+                key={index}
+                className={`rounded-3xl p-4 text-white aspect-square flex flex-col justify-center items-center text-center ${
+                  cardColors[index % cardColors.length]
+                }`}
+              >
+                <p className="text-xl font-semibold">{word.text}</p>
+              </div>
+            ))
+          ) : (
+            <p className="text-white/60 text-sm col-span-2">
+              No vocabulary words identified in this image.
+            </p>
+          )}
         </div>
       </div>
     </motion.div>
