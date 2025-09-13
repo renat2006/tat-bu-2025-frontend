@@ -1,9 +1,12 @@
 'use client'
 
-import { ChevronsRight, Plus } from 'lucide-react'
 import { useState, useRef, useEffect, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
+import { ChevronsRight, Plus } from 'lucide-react'
+import Tile from '@/components/ui/Tile'
 
 export function ARButton() {
+  const router = useRouter()
   const [isDragging, setIsDragging] = useState(false)
   const [dragOffset, setDragOffset] = useState(0)
   const [isActivated, setIsActivated] = useState(false)
@@ -17,7 +20,6 @@ export function ARButton() {
     return Math.max(0, w - KNOB - PADDING)
   }
 
-  // Mouse handlers
   const onMouseDown = (e: React.MouseEvent) => {
     setIsDragging(true)
     e.preventDefault()
@@ -35,7 +37,6 @@ export function ARButton() {
     finishDrag()
   }
 
-  // Touch handlers
   const onTouchStart = () => setIsDragging(true)
   const onTouchMove = (e: TouchEvent) => {
     if (!isDragging) return
@@ -58,11 +59,15 @@ export function ARButton() {
     if (dragOffset >= threshold) {
       setIsActivated(true)
       setDragOffset(max)
-      // TODO: trigger AR action here
+      // Небольшая задержка для плавности и отображения статуса
+      setTimeout(() => {
+        router.push('/scan')
+      }, 250)
+      // fallback на случай отмены перехода
       setTimeout(() => {
         setIsActivated(false)
         setDragOffset(0)
-      }, 1200)
+      }, 1500)
     } else {
       setDragOffset(0)
     }
@@ -86,11 +91,11 @@ export function ARButton() {
   const textOpacity = useMemo(() => {
     const max = getMaxOffset() || 1
     const ratio = dragOffset / max
-    return Math.max(0, 1 - Math.max(0, ratio - 0.25) / 0.5) // fade after 25%
+    return Math.max(0, 1 - Math.max(0, ratio - 0.25) / 0.5)
   }, [dragOffset])
 
   return (
-    <div className="col-span-2 md:col-span-4">
+    <div className="col-span-2 md:col-span-4" aria-live="polite">
       <div
         ref={containerRef}
         className="relative w-full h-[80px] rounded-full overflow-hidden touch-none select-none"
@@ -98,8 +103,9 @@ export function ARButton() {
           background: 'linear-gradient(90deg, #BCFB6C 0%, #A9E85E 100%)',
         }}
         onTouchStart={onTouchStart}
+        role="button"
+        aria-label="Свайпните, чтобы открыть сканер"
       >
-        {/* centered text with paddings so the knob/chevrons have their own zones */}
         <div
           className="absolute inset-0 flex items-center justify-center px-[96px] pointer-events-none"
           style={{ opacity: textOpacity }}
@@ -109,12 +115,10 @@ export function ARButton() {
           </span>
         </div>
 
-        {/* right chevrons (hint) */}
         <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none">
           <ChevronsRight className="w-8 h-8 text-ink/50" />
         </div>
 
-        {/* draggable knob */}
         <div
           onMouseDown={onMouseDown}
           className="absolute top-1/2 -translate-y-1/2 w-[68px] h-[68px] bg-ink rounded-full flex items-center justify-center cursor-grab active:cursor-grabbing z-10"
@@ -126,10 +130,9 @@ export function ARButton() {
           <Plus className="w-8 h-8 text-brandGreen" />
         </div>
 
-        {/* success overlay */}
         {isActivated && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-ink font-semibold text-xl">Начинаем!</span>
+            <span className="text-ink font-bold">Начинаем…</span>
           </div>
         )}
       </div>
