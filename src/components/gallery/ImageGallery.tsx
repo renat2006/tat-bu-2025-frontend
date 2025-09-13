@@ -36,7 +36,17 @@ export const ImageGallery = () => {
     down: false,
   })
   const [hasLoaded, setHasLoaded] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
   const x = useMotionValue(0)
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   useEffect(() => {
     try {
@@ -303,15 +313,23 @@ export const ImageGallery = () => {
                 opacity: 1 - pos * 0.06,
                 rotate: pos > 0 ? (pos % 2 === 0 ? -0.6 : 0.6) : 0,
               }}
-              transition={{
-                type: 'spring',
-                stiffness: 250,
-                damping: 28,
-                mass: 1,
-              }}
+              transition={
+                isMobile
+                  ? {
+                      type: 'tween',
+                      duration: 0.3,
+                      ease: 'easeOut',
+                    }
+                  : {
+                      type: 'spring',
+                      stiffness: 250,
+                      damping: 28,
+                      mass: 1,
+                    }
+              }
               drag={isTopCard}
               dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
-              dragElastic={0.14}
+              dragElastic={isMobile ? 0.1 : 0.14}
               dragMomentum={false}
               onDrag={handleDrag}
               onDragEnd={handleDragEnd}
@@ -319,7 +337,9 @@ export const ImageGallery = () => {
                 x: pos === 0 ? (it.idx > current ? -300 : 300) : 0,
                 opacity: 0,
                 scale: 0.9,
-                transition: { type: 'spring', stiffness: 260, damping: 28 },
+                transition: isMobile
+                  ? { type: 'tween', duration: 0.2, ease: 'easeIn' }
+                  : { type: 'spring', stiffness: 260, damping: 28 },
               }}
             >
               <ImageCard
