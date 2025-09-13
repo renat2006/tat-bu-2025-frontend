@@ -9,7 +9,7 @@ const navItems = [
   { id: 'albums', href: '/gallery', icon: Images },
   { id: 'search', href: '#', icon: Camera, emphasized: true },
   { id: 'learn', href: '#', icon: BookOpen },
-  { id: 'profile', href: '#', icon: User },
+  { id: 'profile', href: '/profile', icon: User },
 ]
 
 export default function AppBar() {

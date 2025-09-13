@@ -1,32 +1,20 @@
-import { Card } from '@/components/ui'
+import { Greeting } from '@/components/dashboard/Greeting'
+import { Stats } from '@/components/dashboard/Stats'
+import { RecentWords } from '@/components/dashboard/RecentWords'
+import { ARButton } from '@/components/dashboard/ARButton'
+import { RecommendedLessons } from '@/components/dashboard/RecommendedLessons'
 
 export default function Home() {
-  const cardData = [
-    { size: 'square', color: 'brandGreen' },
-    { size: 'square', color: 'glassDark' },
-    { size: 'wide', color: 'glassDark' },
-    { size: 'wide', color: 'brandGreen' },
-    { size: 'square', color: 'glassDark' },
-    { size: 'square', color: 'brandGreen' },
-    { size: 'square', color: 'brandGreen' },
-    { size: 'wide', color: 'glassDark' },
-    { size: 'square', color: 'glassDark' },
-    { size: 'square', color: 'brandGreen' },
-  ]
-
   return (
-    <main className="min-h-screen">
-      <div className="p-2">
-        <section className="grid grid-cols-2 md:grid-cols-4 auto-rows-fr gap-2">
-          {cardData.map((card, index) => (
-            <Card
-              key={index}
-              size={card.size as 'square' | 'wide'}
-              color={card.color as 'brandGreen' | 'glassDark'}
-              className={card.size === 'wide' ? 'col-span-2' : ''}
-            />
-          ))}
-        </section>
+    <main className="min-h-screen pb-24 pt-2 px-2">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+        <div className="col-span-2 md:col-span-4">
+          <Greeting />
+        </div>
+        <ARButton />
+        <Stats />
+        <RecentWords />
+        <RecommendedLessons />
       </div>
     </main>
   )
