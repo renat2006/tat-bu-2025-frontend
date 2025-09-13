@@ -12,10 +12,9 @@ const CARD_OFFSET = 20
 const SCALE_FACTOR = 0.07
 const MAX_VISIBLE = 5
 
-// Reusable SVG mask for the card notch to keep shape during animations
-const MASK_SVG = `url("data:image/svg+xml,%3csvg width='350' height='480' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M48 0L121 0C141 0 141 24 175 24C209 24 209 0 229 0L302 0A48 48 0 01350 48L350 432A48 48 0 01302 480L48 480A48 48 0 010 432L0 48A48 48 0 0148 0Z' fill='white'/%3e%3c/svg%3e")`
-
 type TutorialPhase = 'strict' | 'hints' | 'done'
+
+const NOTCH_MASK = `url("data:image/svg+xml,%3csvg width='350' height='480' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M48 0L121 0C141 0 141 24 175 24C209 24 209 0 229 0L302 0A48 48 0 01350 48L350 432A48 48 0 01302 480L48 480A48 48 0 010 432L0 48A48 48 0 0148 0Z' fill='white'/%3e%3c/svg%3e")`
 
 export const ImageGallery = () => {
   const { selectAlbum } = useImageDetailStore()
@@ -26,7 +25,7 @@ export const ImageGallery = () => {
     'left' | 'right' | 'down' | null
   >(null)
   const [tutorialPhase, setTutorialPhase] = useState<TutorialPhase>('strict')
-  const [strictStep, setStrictStep] = useState(0) // 0: left, 1: right, 2: down
+  const [strictStep, setStrictStep] = useState(0)
   const [hintCompletion, setHintCompletion] = useState({
     left: false,
     right: false,
@@ -39,20 +38,14 @@ export const ImageGallery = () => {
   useEffect(() => {
     try {
       const savedPhase = localStorage.getItem('gallery_tutorial_phase')
-      if (savedPhase) {
-        setTutorialPhase(JSON.parse(savedPhase))
-      }
+      if (savedPhase) setTutorialPhase(JSON.parse(savedPhase))
       const savedCompletion = localStorage.getItem('gallery_hint_completion')
-      if (savedCompletion) {
-        setHintCompletion(JSON.parse(savedCompletion))
-      }
+      if (savedCompletion) setHintCompletion(JSON.parse(savedCompletion))
     } catch {}
   }, [])
 
   useEffect(() => {
-    if (loadedCount >= visibleCount) {
-      setIsLoading(false)
-    }
+    if (loadedCount >= visibleCount) setIsLoading(false)
   }, [loadedCount, visibleCount])
 
   const saveState = (
@@ -100,32 +93,27 @@ export const ImageGallery = () => {
     if (tutorialPhase !== 'hints') return
 
     if (Math.abs(info.offset.y) > Math.abs(info.offset.x)) {
-      if (info.offset.y > 20) {
-        setHintDirection('down')
-      } else {
-        setHintDirection(null)
-      }
+      if (info.offset.y > 20) setHintDirection('down')
+      else setHintDirection(null)
     } else {
-      if (info.offset.x < -20) {
-        setHintDirection('left')
-      } else if (info.offset.x > 20) {
-        setHintDirection('right')
-      } else {
-        setHintDirection(null)
-      }
+      if (info.offset.x < -20) setHintDirection('left')
+      else if (info.offset.x > 20) setHintDirection('right')
+      else setHintDirection(null)
     }
   }
 
-  const handleDragEnd = (
-    _event: unknown,
-    info: { offset: { x: number; y: number } },
-  ) => {
+  const handleDragEnd = (_event: unknown, info: PanInfo) => {
     setHintDirection(null)
 
-    const isVerticalDrag = Math.abs(info.offset.y) > Math.abs(info.offset.x)
-    const isLeftSwipe = !isVerticalDrag && info.offset.x < -60
-    const isRightSwipe = !isVerticalDrag && info.offset.x > 60
-    const isDownSwipe = isVerticalDrag && info.offset.y > 60
+    const dx = info.offset.x
+    const dy = info.offset.y
+    const vx = info.velocity.x || 0
+    const vy = info.velocity.y || 0
+
+    const horizontal = Math.abs(dx) >= Math.abs(dy)
+    const isLeftSwipe = horizontal && (dx < -40 || vx < -600)
+    const isRightSwipe = horizontal && (dx > 40 || vx > 600)
+    const isDownSwipe = !horizontal && (dy > 50 || vy > 800)
 
     if (tutorialPhase === 'strict') {
       if (strictStep === 0 && isLeftSwipe) {
@@ -142,28 +130,27 @@ export const ImageGallery = () => {
       return
     }
 
-    if (isDownSwipe) {
-      selectAlbum(items[current])
-    } else if (isLeftSwipe) {
-      nextCard()
-    } else if (isRightSwipe) {
-      prevCard()
-    }
-
     let newCompletion = { ...hintCompletion }
     let phase = tutorialPhase
 
     if (isDownSwipe && !hintCompletion.down) {
+      selectAlbum(items[current])
       newCompletion.down = true
     } else if (isLeftSwipe && !hintCompletion.left) {
+      nextCard()
       newCompletion.left = true
     } else if (isRightSwipe && !hintCompletion.right) {
+      prevCard()
       newCompletion.right = true
+    } else {
+      // Allow free navigation even after hints are done
+      if (isLeftSwipe) nextCard()
+      else if (isRightSwipe) prevCard()
+      else if (isDownSwipe) selectAlbum(items[current])
     }
 
-    if (newCompletion.left && newCompletion.right && newCompletion.down) {
+    if (newCompletion.left && newCompletion.right && newCompletion.down)
       phase = 'done'
-    }
 
     setHintCompletion(newCompletion)
     setTutorialPhase(phase)
@@ -171,10 +158,10 @@ export const ImageGallery = () => {
   }
 
   const handleCardLoaded = (pos: number) => {
+    if (pos === 0) setIsLoading(false)
     setLoadedCount((c) => c + 1)
-    if (pos >= visibleCount - 1 && visibleCount < MAX_VISIBLE) {
+    if (pos >= visibleCount - 1 && visibleCount < MAX_VISIBLE)
       setVisibleCount((c) => Math.min(c + 1, MAX_VISIBLE))
-    }
   }
 
   return (
@@ -182,8 +169,8 @@ export const ImageGallery = () => {
       <motion.div
         className="pointer-events-none absolute h-full w-[min(740px,calc(100%-16px))] z-10"
         style={{
-          maskImage: MASK_SVG,
-          WebkitMaskImage: MASK_SVG,
+          maskImage: NOTCH_MASK as unknown as string,
+          WebkitMaskImage: NOTCH_MASK as unknown as string,
           maskSize: '100% 100%',
           x,
         }}
@@ -193,7 +180,7 @@ export const ImageGallery = () => {
           style={{
             background:
               'linear-gradient(to right, rgba(255, 0, 0, 0.5), transparent 80%)',
-            filter: 'blur(32px)',
+            filter: 'blur(24px)',
             willChange: 'opacity',
           }}
           initial={{ opacity: 0 }}
@@ -214,7 +201,7 @@ export const ImageGallery = () => {
           style={{
             background:
               'linear-gradient(to left, rgba(0, 255, 255, 0.5), transparent 80%)',
-            filter: 'blur(32px)',
+            filter: 'blur(24px)',
             willChange: 'opacity',
           }}
           initial={{ opacity: 0 }}
@@ -285,9 +272,6 @@ export const ImageGallery = () => {
                 willChange: 'transform, opacity',
                 backfaceVisibility: 'hidden',
                 WebkitBackfaceVisibility: 'hidden',
-                maskImage: MASK_SVG as unknown as string,
-                WebkitMaskImage: MASK_SVG as unknown as string,
-                maskSize: '100% 100%',
                 x: isTopCard ? x : undefined,
               }}
               initial={false}

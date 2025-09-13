@@ -12,6 +12,8 @@ interface ImageCardProps {
   onLoaded?: () => void
 }
 
+const NOTCH_MASK = `url("data:image/svg+xml,%3csvg width='350' height='480' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M48 0L121 0C141 0 141 24 175 24C209 24 209 0 229 0L302 0A48 48 0 01350 48L350 432A48 48 0 01302 480L48 480A48 48 0 010 432L0 48A48 48 0 0148 0Z' fill='white'/%3e%3c/svg%3e")`
+
 const ImageCardComponent = ({
   data,
   isTop = false,
@@ -25,10 +27,10 @@ const ImageCardComponent = ({
     <div
       className="relative w-full h-full rounded-[48px] overflow-hidden shadow-2xl will-change-transform [transform:translateZ(0)]"
       style={{
-        maskImage: `url("data:image/svg+xml,%3csvg width='350' height='480' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M48 0L121 0C141 0 141 24 175 24C209 24 209 0 229 0L302 0A48 48 0 01350 48L350 432A48 48 0 01302 480L48 480A48 48 0 010 432L0 48A48 48 0 0148 0Z' fill='white'/%3e%3c/svg%3e")`,
-        WebkitMaskImage: `url("data:image/svg+xml,%3csvg width='350' height='480' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M48 0L121 0C141 0 141 24 175 24C209 24 209 0 229 0L302 0A48 48 0 01350 48L350 432A48 48 0 01302 480L48 480A48 48 0 010 432L0 48A48 48 0 0148 0Z' fill='white'/%3e%3c/svg%3e")`,
-        maskSize: '100% 100%',
         contain: 'layout paint size style',
+        maskImage: NOTCH_MASK as unknown as string,
+        WebkitMaskImage: NOTCH_MASK as unknown as string,
+        maskSize: '100% 100%',
       }}
     >
       <div
@@ -46,7 +48,7 @@ const ImageCardComponent = ({
           placeholder="empty"
           className="object-cover will-change-transform [transform:translateZ(0)]"
           draggable={false}
-          onLoad={() => {
+          onLoadingComplete={() => {
             setLoaded(true)
             onLoaded?.()
           }}
