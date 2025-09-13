@@ -148,7 +148,7 @@ export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
                 }}
               />
               {isLoading && (
-                <div className="absolute inset-0 w-full h-full bg-neutral-900 animate-pulse" />
+                <div className="absolute inset-0 w-full h-full bg-black" />
               )}
             </motion.div>
           </AnimatePresence>
@@ -160,19 +160,12 @@ export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
           style={{ y }}
           className="absolute inset-0 p-4 md:p-6 pb-28 flex flex-col justify-end pointer-events-none z-20"
         >
-          {isLoading ? (
-            <div className="space-y-4">
-              <div className="h-12 w-3/4 bg-neutral-800 rounded-lg animate-pulse" />
-              <div className="h-6 w-1/2 bg-neutral-800 rounded-lg animate-pulse" />
-            </div>
-          ) : (
-            <div className="text-white">
-              <h1 className="text-5xl md:text-6xl font-bold">{data.title}</h1>
-              <p className="text-white/80">
-                Рәсем {currentIndex + 1} / {data.images.length}
-              </p>
-            </div>
-          )}
+          <div className="text-white">
+            <h1 className="text-5xl md:text-6xl font-bold">{data.title}</h1>
+            <p className="text-white/80">
+              Рәсем {currentIndex + 1} / {data.images.length}
+            </p>
+          </div>
         </motion.div>
 
         {data.images.length > 1 && (
@@ -214,14 +207,7 @@ export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
           <h3 className="text-lg font-semibold">Бу истәлектән сүзлек</h3>
         </div>
         <div className="grid grid-cols-2 gap-4 pb-24">
-          {isLoading ? (
-            Array.from({ length: 4 }).map((_, index) => (
-              <div
-                key={index}
-                className="bg-neutral-900 rounded-3xl aspect-square animate-pulse"
-              />
-            ))
-          ) : data.images[currentIndex].words.length > 0 ? (
+          {data.images[currentIndex].words.length > 0 ? (
             data.images[currentIndex].words.map((word, index) => (
               <div
                 key={index}
