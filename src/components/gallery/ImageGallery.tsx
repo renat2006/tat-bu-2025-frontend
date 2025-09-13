@@ -167,7 +167,7 @@ export const ImageGallery = () => {
   }
 
   return (
-    <div className="relative w-full h-[600px] md:h-[640px] flex items-center justify-center will-change-transform [transform:translateZ(0)] overflow-hidden">
+    <div className="relative w-full h-[600px] md:h-[640px] flex items-center justify-center overflow-hidden">
       <motion.div
         className="pointer-events-none absolute h-full w-[min(740px,calc(100%-16px))] z-10"
         style={
@@ -188,8 +188,8 @@ export const ImageGallery = () => {
               ? { willChange: 'opacity' }
               : {
                   background:
-                    'linear-gradient(to right, rgba(255, 0, 0, 0.5), transparent 80%)',
-                  filter: 'blur(24px)',
+                    'linear-gradient(to right, rgba(255, 0, 0, 0.35), transparent 80%)',
+                  filter: 'blur(18px)',
                   willChange: 'opacity',
                 }
           }
@@ -213,8 +213,8 @@ export const ImageGallery = () => {
               ? { willChange: 'opacity' }
               : {
                   background:
-                    'linear-gradient(to left, rgba(0, 255, 255, 0.5), transparent 80%)',
-                  filter: 'blur(24px)',
+                    'linear-gradient(to left, rgba(0, 255, 255, 0.35), transparent 80%)',
+                  filter: 'blur(18px)',
                   willChange: 'opacity',
                 }
           }
@@ -277,15 +277,15 @@ export const ImageGallery = () => {
           return (
             <motion.div
               key={card.id}
-              className={`absolute w-[min(740px,calc(100%-16px))] h-full will-change-transform [transform:translateZ(0)] ${
+              className={`absolute w-[min(740px,calc(100%-16px))] h-full ${
                 isTopCard ? '' : 'pointer-events-none'
               }`}
               style={{
                 transformOrigin: 'top center',
                 zIndex: windowItems.length - pos,
-                willChange: 'transform, opacity',
-                backfaceVisibility: 'hidden',
-                WebkitBackfaceVisibility: 'hidden',
+                willChange: isAndroid ? 'opacity' : 'transform, opacity',
+                backfaceVisibility: isAndroid ? undefined : 'hidden',
+                WebkitBackfaceVisibility: isAndroid ? undefined : 'hidden',
                 x: isTopCard ? x : undefined,
               }}
               initial={false}

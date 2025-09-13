@@ -104,18 +104,22 @@ export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
             <motion.div
               key={page}
               custom={direction}
-              variants={variants}
-              initial="enter"
-              animate="center"
-              exit="exit"
-              transition={{
-                x: { type: 'spring', stiffness: 300, damping: 30 },
-                opacity: { duration: 0.2 },
-              }}
+              variants={isAndroid ? undefined : variants}
+              initial={isAndroid ? false : 'enter'}
+              animate={isAndroid ? { opacity: 1, x: 0 } : 'center'}
+              exit={isAndroid ? { opacity: 0 } : 'exit'}
+              transition={
+                isAndroid
+                  ? { opacity: { duration: 0.2 } }
+                  : {
+                      x: { type: 'spring', stiffness: 300, damping: 30 },
+                      opacity: { duration: 0.2 },
+                    }
+              }
               className="absolute h-full w-full"
               drag="x"
               dragConstraints={{ left: 0, right: 0 }}
-              dragElastic={1}
+              dragElastic={isAndroid ? 0.5 : 1}
               onDragEnd={(e, { offset, velocity }) => {
                 const swipe = Math.abs(offset.x) * velocity.x
                 if (swipe < -10000) {
