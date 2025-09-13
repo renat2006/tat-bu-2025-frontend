@@ -158,6 +158,7 @@ export const ImageGallery = () => {
   }
 
   const handleCardLoaded = (pos: number) => {
+    if (pos === 0) setIsLoading(false)
     setLoadedCount((c) => c + 1)
     if (pos >= visibleCount - 1 && visibleCount < MAX_VISIBLE)
       setVisibleCount((c) => Math.min(c + 1, MAX_VISIBLE))
@@ -165,6 +166,28 @@ export const ImageGallery = () => {
 
   return (
     <div className="relative w-full h-[600px] md:h-[640px] flex items-center justify-center will-change-transform [transform:translateZ(0)] overflow-hidden">
+      {/* Skeleton loader */}
+      {isLoading && (
+        <div
+          className="absolute inset-0 z-50 flex items-center justify-center"
+          style={{
+            maskImage: NOTCH_MASK as unknown as string,
+            WebkitMaskImage: NOTCH_MASK as unknown as string,
+            maskSize: '100% 100%',
+          }}
+        >
+          <div className="w-[min(740px,calc(100%-16px))] h-full rounded-[48px] bg-gradient-to-br from-neutral-800 via-neutral-700 to-neutral-800 animate-pulse">
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-pulse" />
+            <div className="absolute top-8 left-8 right-8">
+              <div className="h-8 bg-neutral-600 rounded-lg animate-pulse mb-4" />
+              <div className="h-4 bg-neutral-600 rounded w-2/3 animate-pulse" />
+            </div>
+            <div className="absolute bottom-8 left-8">
+              <div className="h-12 w-32 bg-neutral-600 rounded-full animate-pulse" />
+            </div>
+          </div>
+        </div>
+      )}
       <motion.div
         className="pointer-events-none absolute h-full w-[min(740px,calc(100%-16px))] z-10"
         style={{
@@ -255,7 +278,7 @@ export const ImageGallery = () => {
         }
       />
       <AnimatePresence>
-        {windowItems.slice(0, visibleCount).map((it, pos) => {
+        {windowItems.map((it, pos) => {
           const card = items[it.idx]
           const isTopCard = pos === 0
 
@@ -309,12 +332,6 @@ export const ImageGallery = () => {
           )
         })}
       </AnimatePresence>
-      {isLoading && (
-        <div className="absolute inset-0 z-[60] pointer-events-auto cursor-wait">
-          <div className="absolute inset-0 bg-black/60" />
-          <div className="absolute inset-2 md:inset-4 rounded-[48px] bg-neutral-900 animate-pulse" />
-        </div>
-      )}
     </div>
   )
 }

@@ -30,6 +30,7 @@ const ProfilePage = () => {
               alt="User Avatar"
               fill
               className="object-cover"
+              sizes="96px"
             />
           </div>
           <h1 className="text-2xl font-bold">Имя Фамилия</h1>
