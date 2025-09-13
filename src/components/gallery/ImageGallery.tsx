@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useCallback } from 'react'
 import { motion, AnimatePresence, PanInfo, useMotionValue } from 'framer-motion'
 import { ImageCard } from './ImageCard'
 import { mockAlbums } from '@/mocks/albums'
@@ -53,18 +53,21 @@ export const ImageGallery = () => {
     }
   }, [hasLoaded]) // This line is removed as per the edit hint.
 
-  const saveState = (
-    phase: TutorialPhase,
-    completion: { left: boolean; right: boolean; down: boolean },
-  ) => {
-    try {
-      localStorage.setItem('gallery_tutorial_phase', JSON.stringify(phase))
-      localStorage.setItem(
-        'gallery_hint_completion',
-        JSON.stringify(completion),
-      )
-    } catch {}
-  }
+  const saveState = useCallback(
+    (
+      phase: TutorialPhase,
+      completion: { left: boolean; right: boolean; down: boolean },
+    ) => {
+      try {
+        localStorage.setItem('gallery_tutorial_phase', JSON.stringify(phase))
+        localStorage.setItem(
+          'gallery_hint_completion',
+          JSON.stringify(completion),
+        )
+      } catch {}
+    },
+    [],
+  )
 
   const windowItems = useMemo(() => {
     const result: Array<{ id: number; idx: number }> = []
@@ -76,96 +79,117 @@ export const ImageGallery = () => {
     return result
   }, [items, current])
 
-  const nextCard = () => setCurrent((c) => (c + 1) % items.length)
-  const prevCard = () =>
-    setCurrent((c) => (c - 1 + items.length) % items.length)
+  const nextCard = useCallback(
+    () => setCurrent((c) => (c + 1) % items.length),
+    [items.length],
+  )
+  const prevCard = useCallback(
+    () => setCurrent((c) => (c - 1 + items.length) % items.length),
+    [items.length],
+  )
 
-  const handleDrag = (_event: unknown, info: PanInfo) => {
-    if (tutorialPhase === 'strict') {
-      const isVerticalDrag = Math.abs(info.offset.y) > Math.abs(info.offset.x)
-      const isLeftSwipe = !isVerticalDrag && info.offset.x < -20
-      const isRightSwipe = !isVerticalDrag && info.offset.x > 20
-      const isDownSwipe = isVerticalDrag && info.offset.y > 20
+  const handleDrag = useCallback(
+    (_event: unknown, info: PanInfo) => {
+      if (tutorialPhase === 'strict') {
+        const isVerticalDrag = Math.abs(info.offset.y) > Math.abs(info.offset.x)
+        const isLeftSwipe = !isVerticalDrag && info.offset.x < -20
+        const isRightSwipe = !isVerticalDrag && info.offset.x > 20
+        const isDownSwipe = isVerticalDrag && info.offset.y > 20
 
-      if (strictStep === 0 && isLeftSwipe) setHintDirection('left')
-      else if (strictStep === 1 && isRightSwipe) setHintDirection('right')
-      else if (strictStep === 2 && isDownSwipe) setHintDirection('down')
-      else setHintDirection(null)
-      return
-    }
-
-    if (tutorialPhase !== 'hints') return
-
-    if (Math.abs(info.offset.y) > Math.abs(info.offset.x)) {
-      if (info.offset.y > 20) setHintDirection('down')
-      else setHintDirection(null)
-    } else {
-      if (info.offset.x < -20) setHintDirection('left')
-      else if (info.offset.x > 20) setHintDirection('right')
-      else setHintDirection(null)
-    }
-  }
-
-  const handleDragEnd = (_event: unknown, info: PanInfo) => {
-    setHintDirection(null)
-
-    const dx = info.offset.x
-    const dy = info.offset.y
-    const vx = info.velocity.x || 0
-    const vy = info.velocity.y || 0
-
-    const horizontal = Math.abs(dx) >= Math.abs(dy)
-    const isLeftSwipe = horizontal && (dx < -40 || vx < -600)
-    const isRightSwipe = horizontal && (dx > 40 || vx > 600)
-    const isDownSwipe = !horizontal && (dy > 50 || vy > 800)
-
-    if (tutorialPhase === 'strict') {
-      if (strictStep === 0 && isLeftSwipe) {
-        nextCard()
-        setStrictStep(1)
-      } else if (strictStep === 1 && isRightSwipe) {
-        prevCard()
-        setStrictStep(2)
-      } else if (strictStep === 2 && isDownSwipe) {
-        selectAlbum(items[current])
-        setTutorialPhase('hints')
-        saveState('hints', hintCompletion)
+        if (strictStep === 0 && isLeftSwipe) setHintDirection('left')
+        else if (strictStep === 1 && isRightSwipe) setHintDirection('right')
+        else if (strictStep === 2 && isDownSwipe) setHintDirection('down')
+        else setHintDirection(null)
+        return
       }
-      return
-    }
 
-    let newCompletion = { ...hintCompletion }
-    let phase = tutorialPhase
+      if (tutorialPhase !== 'hints') return
 
-    if (isDownSwipe && !hintCompletion.down) {
-      selectAlbum(items[current])
-      newCompletion.down = true
-    } else if (isLeftSwipe && !hintCompletion.left) {
-      nextCard()
-      newCompletion.left = true
-    } else if (isRightSwipe && !hintCompletion.right) {
-      prevCard()
-      newCompletion.right = true
-    } else {
-      // Allow free navigation even after hints are done
-      if (isLeftSwipe) nextCard()
-      else if (isRightSwipe) prevCard()
-      else if (isDownSwipe) selectAlbum(items[current])
-    }
+      if (Math.abs(info.offset.y) > Math.abs(info.offset.x)) {
+        if (info.offset.y > 20) setHintDirection('down')
+        else setHintDirection(null)
+      } else {
+        if (info.offset.x < -20) setHintDirection('left')
+        else if (info.offset.x > 20) setHintDirection('right')
+        else setHintDirection(null)
+      }
+    },
+    [tutorialPhase, strictStep],
+  )
 
-    if (newCompletion.left && newCompletion.right && newCompletion.down)
-      phase = 'done'
+  const handleDragEnd = useCallback(
+    (_event: unknown, info: PanInfo) => {
+      setHintDirection(null)
 
-    setHintCompletion(newCompletion)
-    setTutorialPhase(phase)
-    saveState(phase, newCompletion)
-  }
+      const dx = info.offset.x
+      const dy = info.offset.y
+      const vx = info.velocity.x || 0
+      const vy = info.velocity.y || 0
 
-  const handleCardLoaded = () => {
+      const horizontal = Math.abs(dx) >= Math.abs(dy)
+      const isLeftSwipe = horizontal && (dx < -40 || vx < -600)
+      const isRightSwipe = horizontal && (dx > 40 || vx > 600)
+      const isDownSwipe = !horizontal && (dy > 50 || vy > 800)
+
+      if (tutorialPhase === 'strict') {
+        if (strictStep === 0 && isLeftSwipe) {
+          nextCard()
+          setStrictStep(1)
+        } else if (strictStep === 1 && isRightSwipe) {
+          prevCard()
+          setStrictStep(2)
+        } else if (strictStep === 2 && isDownSwipe) {
+          selectAlbum(items[current])
+          setTutorialPhase('hints')
+          saveState('hints', hintCompletion)
+        }
+        return
+      }
+
+      let newCompletion = { ...hintCompletion }
+      let phase = tutorialPhase
+
+      if (isDownSwipe && !hintCompletion.down) {
+        selectAlbum(items[current])
+        newCompletion.down = true
+      } else if (isLeftSwipe && !hintCompletion.left) {
+        nextCard()
+        newCompletion.left = true
+      } else if (isRightSwipe && !hintCompletion.right) {
+        prevCard()
+        newCompletion.right = true
+      } else {
+        // Allow free navigation even after hints are done
+        if (isLeftSwipe) nextCard()
+        else if (isRightSwipe) prevCard()
+        else if (isDownSwipe) selectAlbum(items[current])
+      }
+
+      if (newCompletion.left && newCompletion.right && newCompletion.down)
+        phase = 'done'
+
+      setHintCompletion(newCompletion)
+      setTutorialPhase(phase)
+      saveState(phase, newCompletion)
+    },
+    [
+      items,
+      current,
+      hintCompletion,
+      nextCard,
+      prevCard,
+      saveState,
+      selectAlbum,
+      strictStep,
+      tutorialPhase,
+    ],
+  )
+
+  const handleCardLoaded = useCallback(() => {
     if (!hasLoaded) {
       setHasLoaded(true)
     }
-  }
+  }, [hasLoaded])
 
   return (
     <div className="relative w-full h-[600px] md:h-[640px] flex items-center justify-center will-change-transform [transform:translateZ(0)] overflow-hidden">

@@ -137,19 +137,14 @@ export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
                 priority
                 loading="eager"
                 decoding="async"
-                className={`object-cover transition-opacity duration-200 ease-out ${
+                className={`object-cover transition-opacity duration-300 ease-out ${
                   isLoading ? 'opacity-0' : 'opacity-100'
                 }`}
+                style={{ backgroundColor: 'black' }}
                 draggable={false}
                 unoptimized={isAndroid}
                 onLoadingComplete={() => setIsLoading(false)}
-                onLoad={() => {
-                  if (isLoading) setIsLoading(false)
-                }}
               />
-              {isLoading && (
-                <div className="absolute inset-0 w-full h-full bg-black" />
-              )}
             </motion.div>
           </AnimatePresence>
         </div>
