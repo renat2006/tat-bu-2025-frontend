@@ -1,5 +1,17 @@
+'use client'
+
 import { ChevronRight, Bell, Palette, Lock, LogOut } from 'lucide-react'
 import Image from 'next/image'
+
+// This is a placeholder file. In a real app, you would fetch user data.
+// For now, we'll just redirect to the main profile page.
+// You can replace this with your actual profile logic.
+
+const user = {
+  name: 'Имя Фамилия',
+  email: 'tat-bu-2025@email.com',
+  avatarUrl: '/avatars/man-avatar-2.png',
+}
 
 const ProfilePage = () => {
   const menuItems = [
@@ -26,15 +38,15 @@ const ProfilePage = () => {
         <div className="flex flex-col items-center text-center mb-8">
           <div className="w-24 h-24 rounded-full bg-neutral-800 mb-4 relative overflow-hidden">
             <Image
-              src="/avatars/man-avatar-2.png"
+              src={user.avatarUrl}
               alt="User Avatar"
               fill
               className="object-cover"
               sizes="96px"
             />
           </div>
-          <h1 className="text-2xl font-bold">Имя Фамилия</h1>
-          <p className="text-white/60">tat-bu-2025@email.com</p>
+          <h1 className="text-2xl font-bold">{user.name}</h1>
+          <p className="text-white/60">{user.email}</p>
         </div>
 
         <div className="space-y-2">
