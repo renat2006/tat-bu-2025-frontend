@@ -1,10 +1,8 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
-import Header from '@/components/appbar/Header'
-import BottomNav from '@/components/appbar/BottomNav'
-import ClientLayout from '@/components/layout/ClientLayout'
 import Image from 'next/image'
+import ClientOnly from '@/components/layout/ClientOnly'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -30,13 +28,7 @@ export default function RootLayout({
             priority
           />
         </div>
-        <div id="page-content">
-          <ClientLayout>
-            <Header />
-            {children}
-            <BottomNav />
-          </ClientLayout>
-        </div>
+        <ClientOnly>{children}</ClientOnly>
       </body>
     </html>
   )
