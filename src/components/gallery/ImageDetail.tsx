@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { ArrowLeft, Languages } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { Album } from '@/types/gallery'
+import { useIsAndroid } from '@/hooks/useIsAndroid'
 
 interface ImageDetailProps {
   data: Album
@@ -38,6 +39,7 @@ const variants = {
 export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
   const [[page, direction], setPage] = useState([0, 0])
   const [isLoading, setIsLoading] = useState(true)
+  const isAndroid = useIsAndroid()
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const { scrollY } = useScroll({ container: scrollRef })
@@ -70,12 +72,20 @@ export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
     >
       <header className="fixed top-0 left-0 right-0 p-4 md:p-6 flex items-center justify-between text-white z-30">
         <motion.div
-          className="absolute inset-0 bg-black/20 backdrop-blur-lg"
+          className={
+            isAndroid
+              ? 'absolute inset-0 bg-black/40'
+              : 'absolute inset-0 bg-black/20 backdrop-blur-lg'
+          }
           style={{ opacity: headerOpacity }}
         />
         <button
           onClick={onClose}
-          className="relative w-12 h-12 rounded-full bg-black/20 backdrop-blur-md flex items-center justify-center"
+          className={
+            isAndroid
+              ? 'relative w-12 h-12 rounded-full bg-black/40 flex items-center justify-center'
+              : 'relative w-12 h-12 rounded-full bg-black/20 backdrop-blur-md flex items-center justify-center'
+          }
         >
           <ArrowLeft size={20} />
         </button>
@@ -94,18 +104,22 @@ export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
             <motion.div
               key={page}
               custom={direction}
-              variants={variants}
-              initial="enter"
-              animate="center"
-              exit="exit"
-              transition={{
-                x: { type: 'spring', stiffness: 300, damping: 30 },
-                opacity: { duration: 0.2 },
-              }}
+              variants={isAndroid ? undefined : variants}
+              initial={isAndroid ? false : 'enter'}
+              animate={isAndroid ? { opacity: 1, x: 0 } : 'center'}
+              exit={isAndroid ? { opacity: 0 } : 'exit'}
+              transition={
+                isAndroid
+                  ? { opacity: { duration: 0.2 } }
+                  : {
+                      x: { type: 'spring', stiffness: 300, damping: 30 },
+                      opacity: { duration: 0.2 },
+                    }
+              }
               className="absolute h-full w-full"
               drag="x"
               dragConstraints={{ left: 0, right: 0 }}
-              dragElastic={1}
+              dragElastic={isAndroid ? 0.5 : 1}
               onDragEnd={(e, { offset, velocity }) => {
                 const swipe = Math.abs(offset.x) * velocity.x
                 if (swipe < -10000) {
@@ -127,7 +141,11 @@ export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
                   isLoading ? 'opacity-0' : 'opacity-100'
                 }`}
                 draggable={false}
+                unoptimized={isAndroid}
                 onLoadingComplete={() => setIsLoading(false)}
+                onLoad={() => {
+                  if (isLoading) setIsLoading(false)
+                }}
               />
               {isLoading && (
                 <div className="absolute inset-0 w-full h-full bg-neutral-900 animate-pulse" />
@@ -180,6 +198,7 @@ export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
                           ? 'ring-2 ring-white scale-105'
                           : 'opacity-60 hover:opacity-100'
                       }`}
+                      unoptimized={isAndroid}
                     />
                   </button>
                 ))}

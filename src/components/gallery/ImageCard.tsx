@@ -4,6 +4,7 @@ import { memo, useState } from 'react'
 import Image from 'next/image'
 import { Album } from '@/types/gallery'
 import { ImageIcon } from 'lucide-react'
+import { useIsAndroid } from '@/hooks/useIsAndroid'
 
 interface ImageCardProps {
   data: Album
@@ -22,16 +23,21 @@ const ImageCardComponent = ({
 }: ImageCardProps) => {
   const [loaded, setLoaded] = useState(false)
   const coverImage = data.images[0]
+  const isAndroid = useIsAndroid()
 
   return (
     <div
-      className="relative w-full h-full rounded-[48px] overflow-hidden shadow-2xl will-change-transform [transform:translateZ(0)]"
-      style={{
-        contain: 'layout paint size style',
-        maskImage: NOTCH_MASK as unknown as string,
-        WebkitMaskImage: NOTCH_MASK as unknown as string,
-        maskSize: '100% 100%',
-      }}
+      className="relative w-full h-full rounded-[48px] overflow-hidden shadow-2xl"
+      style={
+        isAndroid
+          ? { contain: 'layout paint size style' }
+          : {
+              contain: 'layout paint size style',
+              maskImage: NOTCH_MASK as unknown as string,
+              WebkitMaskImage: NOTCH_MASK as unknown as string,
+              maskSize: '100% 100%',
+            }
+      }
     >
       <div
         className={`absolute inset-0 bg-neutral-900 ${
@@ -48,11 +54,18 @@ const ImageCardComponent = ({
           loading={isTop ? 'eager' : 'lazy'}
           decoding="async"
           placeholder="empty"
-          className="object-cover will-change-transform [transform:translateZ(0)]"
+          className="object-cover"
           draggable={false}
+          unoptimized={isAndroid}
           onLoadingComplete={() => {
             setLoaded(true)
             onLoaded?.()
+          }}
+          onLoad={() => {
+            if (!loaded) {
+              setLoaded(true)
+              onLoaded?.()
+            }
           }}
         />
       )}
