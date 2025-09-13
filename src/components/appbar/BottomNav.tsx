@@ -4,16 +4,16 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import clsx from 'clsx'
 
-const navItems = [
-  { id: 'home', href: '/', icon: Home },
-  { id: 'albums', href: '/gallery', icon: Images },
-  { id: 'search', href: '#', icon: Camera, emphasized: true },
-  { id: 'learn', href: '#', icon: BookOpen },
-  { id: 'profile', href: '/profile', icon: User },
-]
-
 export default function AppBar() {
   const pathname = usePathname() || '/'
+
+  const navItems = [
+    { id: 'home', href: '/', icon: Home },
+    { id: 'albums', href: '/gallery', icon: Images },
+    { id: 'search', href: '#', icon: Camera, emphasized: true },
+    { id: 'learn', href: '/learn', icon: BookOpen },
+    { id: 'profile', href: '/profile', icon: User },
+  ] as const
 
   return (
     <nav className="fixed bottom-4 left-0 right-0 z-50 md:hidden">
@@ -42,6 +42,7 @@ export default function AppBar() {
                   href={item.href}
                   className={clsx(
                     'flex items-center justify-center rounded-full',
+                    // @ts-expect-error custom style
                     item.emphasized
                       ? 'h-18 w-18 -mt-18 ring-1 ring-white/20 bg-white'
                       : 'h-12 w-12',
@@ -49,12 +50,14 @@ export default function AppBar() {
                 >
                   <item.icon
                     className={clsx(
+                      // @ts-expect-error custom style
                       item.emphasized
                         ? 'h-[30px] w-[30px]'
                         : 'h-[26px] w-[26px]',
                       isActive
                         ? '[color:var(--color-brand-green)]'
-                        : item.emphasized
+                        : // @ts-expect-error custom style
+                          item.emphasized
                           ? 'text-black/80'
                           : 'text-white/80',
                     )}
