@@ -125,6 +125,8 @@ export default function ExplorePage() {
   const [vh, setVh] = useState<number>(0)
   const history = useExploreStore((s) => s.history)
   const [activeTab, setActiveTab] = useState<'words' | 'history'>('words')
+  const [cameraError, setCameraError] = useState<string | null>(null)
+  const [sheetDragging, setSheetDragging] = useState(false)
   const dragRef = useRef<{ startY: number; moved: boolean }>({
     startY: 0,
     moved: false,
@@ -141,14 +143,14 @@ export default function ExplorePage() {
     }
   }, [])
 
-  const collapsedH = 250
-  const panelH = expanded ? Math.max(260, Math.round(vh * 0.65)) : collapsedH
-  const videoH = vh ? Math.max(0, vh - panelH) : undefined
-
+  // Блокируем pull-to-refresh во время жеста разворота шита
   useEffect(() => {
-    document.body.classList.add('hide-chrome')
-    return () => document.body.classList.remove('hide-chrome')
-  }, [])
+    const prevent = (e: TouchEvent) => {
+      if (sheetDragging && e.cancelable) e.preventDefault()
+    }
+    window.addEventListener('touchmove', prevent, { passive: false })
+    return () => window.removeEventListener('touchmove', prevent)
+  }, [sheetDragging])
 
   // При сворачивании возвращаем вкладку в «Слова»
   useEffect(() => {
@@ -417,6 +419,12 @@ export default function ExplorePage() {
     }
   }
 
+  const collapsedH = 170 // высота нижней панели
+  const panelH = expanded ? Math.max(260, Math.round(vh * 0.65)) : collapsedH
+  const videoHeightPx = vh
+    ? `${Math.max(0, vh - panelH)}px`
+    : `calc(100svh - ${collapsedH}px)`
+
   return (
     <main className="min-h-screen h-[100svh] pb-0 pt-0 overflow-hidden">
       {/* скрыть хедер/навигацию на AR-странице */}
@@ -426,9 +434,7 @@ export default function ExplorePage() {
       <div
         ref={overlayRef}
         className="relative rounded-[24px] overflow-hidden ring-0 w-full"
-        style={{
-          height: videoH ? `${videoH}px` : `calc(100svh - ${collapsedH}px)`,
-        }}
+        style={{ height: videoHeightPx }}
       >
         <Link
           href="/"
@@ -460,7 +466,22 @@ export default function ExplorePage() {
           screenshotFormat="image/jpeg"
           videoConstraints={{ facingMode: 'environment' }}
           className="w-full h-full object-cover"
+          onUserMediaError={(e) =>
+            setCameraError((e as any)?.message || 'Камера недоступна')
+          }
         />
+
+        {cameraError && (
+          <div className="absolute inset-0 flex items-center justify-center z-40">
+            <div className="mx-6 rounded-2xl bg-[rgba(17,18,23,0.8)] text-white ring-1 ring-white/10 p-4 text-center">
+              <p className="font-semibold">Камера недоступна</p>
+              <p className="text-sm text-white/80 mt-1">
+                Разрешите доступ к камере в настройках браузера и обновите
+                страницу.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* bbox highlight */}
         {bubbles.map((b) => (
@@ -509,16 +530,19 @@ export default function ExplorePage() {
               onTouchStart={(e) => {
                 dragRef.current.startY = e.touches[0].clientY
                 dragRef.current.moved = false
+                setSheetDragging(true)
               }}
               onTouchMove={(e) => {
                 const dy = e.touches[0].clientY - dragRef.current.startY
                 if (Math.abs(dy) > 10) dragRef.current.moved = true
+                if (e.cancelable) e.preventDefault()
               }}
               onTouchEnd={(e) => {
                 const dy = e.changedTouches[0].clientY - dragRef.current.startY
                 if (!dragRef.current.moved) return
                 if (dy < -40) setExpanded(true)
                 else if (dy > 40) setExpanded(false)
+                setSheetDragging(false)
               }}
             />
             {/* chips row */}
