@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import { ArrowLeft, Languages } from 'lucide-react'
-import { useRef, useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Album } from '@/types/gallery'
 import { useIsAndroid } from '@/hooks/useIsAndroid'
 
@@ -12,10 +12,8 @@ interface ImageDetailProps {
 }
 
 const cardColors = [
-  'bg-lime-400/80 text-lime-950',
-  'bg-sky-400/80 text-sky-950',
-  'bg-amber-400/80 text-amber-950',
-  'bg-violet-400/80 text-violet-950',
+  'bg-brand-green/10 text-brand-green ring-brand-green/20',
+  'bg-white/10 text-white ring-white/20',
 ]
 
 export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
@@ -39,8 +37,17 @@ export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
   }, [])
 
   useEffect(() => {
-    setIsVisible(true)
+    // Trigger fade-in animation
+    requestAnimationFrame(() => {
+      setIsVisible(true)
+    })
   }, [])
+
+  const handleClose = () => {
+    setIsVisible(false)
+    // Wait for animation to finish before calling parent onClose
+    setTimeout(onClose, 300)
+  }
 
   const paginate = (newDirection: number) => {
     setIsLoading(true)
@@ -59,14 +66,12 @@ export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
 
   const handleDragStart = (e: React.TouchEvent | React.MouseEvent) => {
     const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
-    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
-    setDragStart({ x: clientX, y: clientY })
+    setDragStart({ x: clientX, y: 0 }) // y is not used but kept for consistency
     setDragOffset(0)
   }
 
   const handleDragMove = (e: React.TouchEvent | React.MouseEvent) => {
     if (!dragStart) return
-
     const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
     const offsetX = clientX - dragStart.x
     setDragOffset(offsetX)
@@ -76,14 +81,9 @@ export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
     if (!dragStart) return
 
     const threshold = 50
-    const velocity = Math.abs(dragOffset) > threshold
-
-    if (velocity) {
-      if (dragOffset < -threshold) {
-        paginate(1)
-      } else if (dragOffset > threshold) {
-        paginate(-1)
-      }
+    if (Math.abs(dragOffset) > threshold) {
+      if (dragOffset < -threshold) paginate(1)
+      else if (dragOffset > threshold) paginate(-1)
     }
 
     setDragStart(null)
@@ -92,45 +92,25 @@ export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
 
   return (
     <div
-      className={`fixed inset-0 z-[100] bg-black overflow-y-auto transition-opacity duration-300 ${
+      className={`fixed inset-0 z-[100] bg-black/50 backdrop-blur-2xl overflow-y-auto transition-opacity duration-300 ${
         isVisible ? 'opacity-100' : 'opacity-0'
       }`}
     >
       <header className="fixed top-0 left-0 right-0 p-4 md:p-6 flex items-center justify-between text-white z-30">
-        <div
-          className={`absolute inset-0 transition-opacity duration-300 ${
-            isMobile
-              ? 'bg-black/60'
-              : isAndroid
-                ? 'bg-black/40'
-                : 'bg-black/20 backdrop-blur-lg'
-          }`}
-        />
         <button
-          onClick={onClose}
-          className={`relative w-12 h-12 rounded-full flex items-center justify-center transition-colors duration-200 ${
-            isMobile
-              ? 'bg-black/60 hover:bg-black/80'
-              : isAndroid
-                ? 'bg-black/40 hover:bg-black/60'
-                : 'bg-black/20 backdrop-blur-md hover:bg-black/40'
-          }`}
+          onClick={handleClose}
+          className="relative w-12 h-12 rounded-full bg-black/20 backdrop-blur-md flex items-center justify-center ring-1 ring-white/10 hover:bg-white/20 transition-all duration-200"
         >
           <ArrowLeft size={20} />
         </button>
-        <span className="relative font-semibold">{data.title}</span>
-        <div className="w-12 h-12" />
       </header>
 
-      <div className="relative w-full h-[65vh] md:h-[75vh]">
+      <div className="relative w-full h-[60vh] md:h-[70vh]">
         <div className="absolute inset-0 overflow-hidden">
           <div
             className="absolute h-full w-full"
             style={{
-              transform:
-                dragOffset !== 0
-                  ? `translateX(${dragOffset}px)`
-                  : 'translateX(0)',
+              transform: `translateX(${dragOffset}px)`,
               transition: dragOffset === 0 ? 'transform 0.3s ease-out' : 'none',
             }}
             onTouchStart={handleDragStart}
@@ -161,80 +141,70 @@ export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
           </div>
         </div>
 
-        <div
-          className={`absolute inset-0 pointer-events-none z-10 ${
-            isMobile
-              ? 'bg-gradient-to-t from-black/80 via-black/20 to-transparent'
-              : 'bg-gradient-to-t from-black/90 via-black/40 to-transparent'
-          }`}
-        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent pointer-events-none z-10" />
 
-        <div className="absolute inset-0 p-4 md:p-6 pb-28 flex flex-col justify-end pointer-events-none z-20">
+        <div className="absolute inset-0 p-4 md:p-6 flex flex-col justify-end pointer-events-none z-20">
           <div className="text-white">
-            <h1
-              className={`font-bold ${isMobile ? 'text-3xl' : 'text-5xl md:text-6xl'}`}
-            >
+            <h1 className="text-4xl md:text-6xl font-bold leading-tight">
               {data.title}
             </h1>
-            <p className="text-white/80">
+            <p className="text-white/80 mt-1">
               Рәсем {currentIndex + 1} / {data.images.length}
             </p>
           </div>
         </div>
-
-        {data.images.length > 1 && (
-          <div className="absolute bottom-4 left-0 right-0 z-20">
-            <div className="px-4">
-              <div className="flex space-x-2 overflow-x-auto pb-2">
-                {data.images.map((image, index) => (
-                  <button
-                    key={index}
-                    onClick={() => changeImage(index)}
-                    className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 transition-all duration-200"
-                  >
-                    <Image
-                      src={image.src}
-                      alt={`thumbnail ${index + 1}`}
-                      width={80}
-                      height={80}
-                      sizes="80px"
-                      loading="lazy"
-                      decoding="async"
-                      className={`object-cover w-full h-full transition-all duration-200 ease-out ${
-                        currentIndex === index
-                          ? 'ring-2 ring-white scale-105'
-                          : 'opacity-60 hover:opacity-100'
-                      }`}
-                      unoptimized={isMobile || isAndroid}
-                      quality={isMobile ? 60 : 70}
-                    />
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
       </div>
+
+      {data.images.length > 1 && (
+        <div className="px-4 md:px-6 pt-4">
+          <div className="flex space-x-2 overflow-x-auto pb-2 -mx-4 md:-mx-6 px-4 md:px-6">
+            {data.images.map((image, index) => (
+              <button
+                key={index}
+                onClick={() => changeImage(index)}
+                className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 transition-all duration-200"
+              >
+                <Image
+                  src={image.src}
+                  alt={`thumbnail ${index + 1}`}
+                  width={80}
+                  height={80}
+                  sizes="80px"
+                  loading="lazy"
+                  decoding="async"
+                  className={`object-cover w-full h-full transition-all duration-200 ease-out ${
+                    currentIndex === index
+                      ? 'ring-2 ring-white scale-105'
+                      : 'opacity-60 hover:opacity-100 hover:scale-105'
+                  }`}
+                  unoptimized={isMobile || isAndroid}
+                  quality={isMobile ? 60 : 70}
+                />
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="relative z-10 p-4 md:p-6">
         <div className="flex items-center gap-3 mb-4 text-white">
           <Languages size={20} />
           <h3 className="text-lg font-semibold">Бу истәлектән сүзлек</h3>
         </div>
-        <div className="grid grid-cols-2 gap-4 pb-24">
+        <div className="flex flex-wrap gap-3 pb-24">
           {data.images[currentIndex].words.length > 0 ? (
             data.images[currentIndex].words.map((word, index) => (
               <div
                 key={index}
-                className={`rounded-3xl p-4 text-white aspect-square flex flex-col justify-center items-center text-center transition-all duration-200 hover:scale-105 ${
+                className={`px-4 py-2 rounded-full ring-1 transition-all duration-200 hover:scale-105 ${
                   cardColors[index % cardColors.length]
                 }`}
               >
-                <p className="text-xl font-semibold">{word.text}</p>
+                <p className="text-base font-medium">{word.text}</p>
               </div>
             ))
           ) : (
-            <p className="text-white/60 text-sm col-span-2">
+            <p className="text-white/60 text-sm">
               Бу рәсемдә сүзләр табылмады.
             </p>
           )}
