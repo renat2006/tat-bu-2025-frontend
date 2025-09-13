@@ -3,7 +3,7 @@ import clsx from 'clsx'
 import { colors, type ColorToken } from '@/constants/theme'
 import { useMemo } from 'react'
 
-type CardSize = 'square' | 'wide'
+type CardSize = 'square' | 'wide' | 'auto'
 
 type CardProps = {
   size?: CardSize
@@ -28,6 +28,7 @@ export default function Card({
   const sizeClasses = {
     square: 'aspect-square',
     wide: 'col-span-2 aspect-[2/1]',
+    auto: '',
   }[size]
 
   const radiusClasses = size === 'wide' ? 'rounded-[34px]' : 'rounded-[38px]'

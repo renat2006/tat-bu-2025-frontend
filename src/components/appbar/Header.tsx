@@ -3,8 +3,11 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Bell } from 'lucide-react'
 import clsx from 'clsx'
+import { useUserStore } from '@/stores/userStore'
 
 export default function Header() {
+  const { user } = useUserStore()
+
   return (
     <header className={clsx('z-10')}>
       <div className="mx-auto max-w-6xl px-2 py-3 flex items-center justify-between">
@@ -18,14 +21,12 @@ export default function Header() {
           >
             <Bell className="h-6 w-6 text-white/80" />
           </button>
-          <button className="-ml-3 z-2 inline-flex h-13 w-13 overflow-hidden rounded-full ring-1 ring-white/10">
-            <Image
-              src="/avatars/man-avatar-3.png"
-              alt="User"
-              width={56}
-              height={56}
-            />
-          </button>
+          <Link
+            href="/profile"
+            className="-ml-3 z-2 inline-flex h-13 w-13 overflow-hidden rounded-full ring-1 ring-white/10 hover:ring-white/20 transition-all"
+          >
+            <Image src={user.avatar} alt="User" width={56} height={56} />
+          </Link>
         </div>
       </div>
     </header>

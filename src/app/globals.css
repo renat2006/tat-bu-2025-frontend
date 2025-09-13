@@ -138,3 +138,20 @@ body.loading #page-content {
     transition: all 0.2s ease-out;
   }
 }
+
+.slick-dots {
+  display: none !important;
+}
+
+.slick-slide > div {
+  height: 100%;
+}
+
+.slick-track {
+  height: 100%;
+  width: 100% !important;
+}
+
+.slick-slider {
+  height: 100%;
+}
