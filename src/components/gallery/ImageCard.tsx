@@ -50,7 +50,9 @@ const ImageCardComponent = ({
           alt={data.title}
           fill
           sizes="(max-width: 640px) 92vw, (max-width: 1024px) 720px, 960px"
-          priority={isTop || preload}
+          priority={isTop && preload}
+          loading={isTop ? 'eager' : 'lazy'}
+          decoding="async"
           placeholder="empty"
           className="object-cover"
           draggable={false}
