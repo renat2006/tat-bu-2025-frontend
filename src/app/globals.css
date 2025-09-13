@@ -19,3 +19,51 @@ body {
   background: rgba(188, 251, 108, 0.25);
   color: #EDEDED;
 }
+
+@tailwind utilities;
+
+#initial-preloader {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background-color: black;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 1;
+  transition: opacity 0.5s ease-in-out;
+}
+
+#initial-preloader img {
+  width: 120px;
+  height: 120px;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+body.loading #initial-preloader {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+body:not(.loading) #initial-preloader {
+  opacity: 0;
+  pointer-events: none;
+}
+
+#page-content {
+  transition: opacity 0.5s ease-in-out;
+}
+
+body.loading #page-content {
+  opacity: 0;
+}

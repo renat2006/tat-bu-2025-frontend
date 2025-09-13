@@ -1,3 +1,5 @@
+'use client'
+
 import { ImageGallery, ImageDetailController } from '@/components/gallery'
 
 export default function GalleryPage() {
