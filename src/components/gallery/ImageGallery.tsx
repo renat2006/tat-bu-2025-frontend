@@ -7,6 +7,7 @@ import { mockAlbums } from '@/mocks/albums'
 import { ArrowLeft, ArrowRight, ArrowDown } from 'lucide-react'
 import { useImageDetailStore } from '@/stores/imageDetailStore'
 import { Hint } from './Hint'
+import { useIsAndroid } from '@/hooks/useIsAndroid'
 
 const CARD_OFFSET = 20
 const SCALE_FACTOR = 0.07
@@ -34,6 +35,7 @@ export const ImageGallery = () => {
   const [loadedCount, setLoadedCount] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
   const x = useMotionValue(0)
+  const isAndroid = useIsAndroid()
 
   useEffect(() => {
     try {
@@ -168,21 +170,29 @@ export const ImageGallery = () => {
     <div className="relative w-full h-[600px] md:h-[640px] flex items-center justify-center will-change-transform [transform:translateZ(0)] overflow-hidden">
       <motion.div
         className="pointer-events-none absolute h-full w-[min(740px,calc(100%-16px))] z-10"
-        style={{
-          maskImage: NOTCH_MASK as unknown as string,
-          WebkitMaskImage: NOTCH_MASK as unknown as string,
-          maskSize: '100% 100%',
-          x,
-        }}
+        style={
+          isAndroid
+            ? { x }
+            : {
+                maskImage: NOTCH_MASK as unknown as string,
+                WebkitMaskImage: NOTCH_MASK as unknown as string,
+                maskSize: '100% 100%',
+                x,
+              }
+        }
       >
         <motion.div
           className="absolute inset-y-0 left-0 w-1/2"
-          style={{
-            background:
-              'linear-gradient(to right, rgba(255, 0, 0, 0.5), transparent 80%)',
-            filter: 'blur(24px)',
-            willChange: 'opacity',
-          }}
+          style={
+            isAndroid
+              ? { willChange: 'opacity' }
+              : {
+                  background:
+                    'linear-gradient(to right, rgba(255, 0, 0, 0.5), transparent 80%)',
+                  filter: 'blur(24px)',
+                  willChange: 'opacity',
+                }
+          }
           initial={{ opacity: 0 }}
           animate={{
             opacity:
@@ -198,12 +208,16 @@ export const ImageGallery = () => {
         />
         <motion.div
           className="absolute inset-y-0 right-0 w-1/2"
-          style={{
-            background:
-              'linear-gradient(to left, rgba(0, 255, 255, 0.5), transparent 80%)',
-            filter: 'blur(24px)',
-            willChange: 'opacity',
-          }}
+          style={
+            isAndroid
+              ? { willChange: 'opacity' }
+              : {
+                  background:
+                    'linear-gradient(to left, rgba(0, 255, 255, 0.5), transparent 80%)',
+                  filter: 'blur(24px)',
+                  willChange: 'opacity',
+                }
+          }
           initial={{ opacity: 0 }}
           animate={{
             opacity:
