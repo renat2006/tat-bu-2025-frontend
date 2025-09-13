@@ -10,7 +10,7 @@ export default function AppBar() {
   const navItems = [
     { id: 'home', href: '/', icon: Home },
     { id: 'albums', href: '/gallery', icon: Images },
-    { id: 'search', href: '/scan', icon: Camera, emphasized: true },
+    { id: 'search', href: '/explore', icon: Camera, emphasized: true },
     { id: 'learn', href: '/learn', icon: BookOpen },
     { id: 'profile', href: '/profile', icon: User },
   ] as const
