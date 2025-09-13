@@ -5,7 +5,6 @@ import Image from 'next/image'
 import { Album } from '@/types/gallery'
 import { ImageIcon } from 'lucide-react'
 import { useIsAndroid } from '@/hooks/useIsAndroid'
-import { toOptimized } from '@/utils/images'
 
 interface ImageCardProps {
   data: Album
@@ -24,7 +23,6 @@ const ImageCardComponent = ({
 }: ImageCardProps) => {
   const [loaded, setLoaded] = useState(false)
   const coverImage = data.images[0]
-  const optimizedSrc = coverImage ? toOptimized(coverImage.src, 'webp') : ''
   const isAndroid = useIsAndroid()
 
   return (
@@ -48,7 +46,7 @@ const ImageCardComponent = ({
       />
       {coverImage && (
         <Image
-          src={isAndroid ? optimizedSrc || coverImage.src : coverImage.src}
+          src={coverImage.src}
           alt={data.title}
           fill
           sizes="(max-width: 640px) 92vw, (max-width: 1024px) 720px, 960px"
@@ -65,16 +63,6 @@ const ImageCardComponent = ({
             if (!loaded) {
               setLoaded(true)
               onLoaded?.()
-            }
-          }}
-          onError={(e) => {
-            const img = e.target as HTMLImageElement
-            if (
-              img &&
-              optimizedSrc &&
-              img.getAttribute('src') === optimizedSrc
-            ) {
-              img.setAttribute('src', coverImage.src)
             }
           }}
         />
