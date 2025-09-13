@@ -6,6 +6,7 @@ import { ArrowLeft, Languages } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { Album } from '@/types/gallery'
 import { useIsAndroid } from '@/hooks/useIsAndroid'
+import { toOptimized } from '@/utils/images'
 
 interface ImageDetailProps {
   data: Album
@@ -61,6 +62,8 @@ export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
 
   const currentIndex =
     ((page % data.images.length) + data.images.length) % data.images.length
+  const currentSrc = data.images[currentIndex].src
+  const optimizedSrc = toOptimized(currentSrc, 'webp')
 
   return (
     <motion.div
@@ -130,7 +133,7 @@ export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
               }}
             >
               <Image
-                src={data.images[currentIndex].src}
+                src={isAndroid ? optimizedSrc || currentSrc : currentSrc}
                 alt={data.title}
                 fill
                 priority
@@ -142,6 +145,16 @@ export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
                 onLoadingComplete={() => setIsLoading(false)}
                 onLoad={() => {
                   if (isLoading) setIsLoading(false)
+                }}
+                onError={(e) => {
+                  const img = e.target as HTMLImageElement
+                  if (
+                    img &&
+                    optimizedSrc &&
+                    img.getAttribute('src') === optimizedSrc
+                  ) {
+                    img.setAttribute('src', currentSrc)
+                  }
                 }}
               />
               {isLoading && (
