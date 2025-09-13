@@ -119,8 +119,11 @@ export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
                 src={data.images[currentIndex].src}
                 alt={data.title}
                 fill
+                sizes="100vw"
                 priority
-                className={`object-cover transition-opacity duration-300 ${
+                loading="eager"
+                decoding="async"
+                className={`object-cover transition-opacity duration-200 ease-out ${
                   isLoading ? 'opacity-0' : 'opacity-100'
                 }`}
                 draggable={false}
@@ -169,7 +172,10 @@ export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
                       alt={`thumbnail ${index + 1}`}
                       width={80}
                       height={80}
-                      className={`object-cover w-full h-full transition-all duration-300 ${
+                      sizes="80px"
+                      loading="lazy"
+                      decoding="async"
+                      className={`object-cover w-full h-full transition-all duration-200 ease-out ${
                         currentIndex === index
                           ? 'ring-2 ring-white scale-105'
                           : 'opacity-60 hover:opacity-100'

@@ -158,7 +158,6 @@ export const ImageGallery = () => {
   }
 
   const handleCardLoaded = (pos: number) => {
-    if (pos === 0) setIsLoading(false)
     setLoadedCount((c) => c + 1)
     if (pos >= visibleCount - 1 && visibleCount < MAX_VISIBLE)
       setVisibleCount((c) => Math.min(c + 1, MAX_VISIBLE))
@@ -256,7 +255,7 @@ export const ImageGallery = () => {
         }
       />
       <AnimatePresence>
-        {windowItems.map((it, pos) => {
+        {windowItems.slice(0, visibleCount).map((it, pos) => {
           const card = items[it.idx]
           const isTopCard = pos === 0
 
@@ -310,6 +309,12 @@ export const ImageGallery = () => {
           )
         })}
       </AnimatePresence>
+      {isLoading && (
+        <div className="absolute inset-0 z-[60] pointer-events-auto cursor-wait">
+          <div className="absolute inset-0 bg-black/60" />
+          <div className="absolute inset-2 md:inset-4 rounded-[48px] bg-neutral-900 animate-pulse" />
+        </div>
+      )}
     </div>
   )
 }
