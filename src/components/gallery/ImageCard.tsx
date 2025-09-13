@@ -27,7 +27,7 @@ const ImageCardComponent = ({
 
   return (
     <div
-      className="relative w-full h-full rounded-[48px] overflow-hidden shadow-2xl will-change-transform [transform:translateZ(0)]"
+      className="relative w-full h-full rounded-[48px] overflow-hidden shadow-2xl"
       style={
         isAndroid
           ? { contain: 'layout paint size style' }
@@ -52,7 +52,7 @@ const ImageCardComponent = ({
           sizes="(max-width: 640px) 92vw, (max-width: 1024px) 720px, 960px"
           priority={isTop || preload}
           placeholder="empty"
-          className="object-cover will-change-transform [transform:translateZ(0)]"
+          className="object-cover"
           draggable={false}
           unoptimized={isAndroid}
           onLoadingComplete={() => {
