@@ -40,6 +40,7 @@ export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
   const [[page, direction], setPage] = useState([0, 0])
   const [isLoading, setIsLoading] = useState(true)
   const isAndroid = useIsAndroid()
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const { scrollY } = useScroll({ container: scrollRef })
@@ -73,18 +74,22 @@ export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
       <header className="fixed top-0 left-0 right-0 p-4 md:p-6 flex items-center justify-between text-white z-30">
         <motion.div
           className={
-            isAndroid
-              ? 'absolute inset-0 bg-black/40'
-              : 'absolute inset-0 bg-black/20 backdrop-blur-lg'
+            isMobile
+              ? 'absolute inset-0 bg-black/60'
+              : isAndroid
+                ? 'absolute inset-0 bg-black/40'
+                : 'absolute inset-0 bg-black/20 backdrop-blur-lg'
           }
           style={{ opacity: headerOpacity }}
         />
         <button
           onClick={onClose}
           className={
-            isAndroid
-              ? 'relative w-12 h-12 rounded-full bg-black/40 flex items-center justify-center'
-              : 'relative w-12 h-12 rounded-full bg-black/20 backdrop-blur-md flex items-center justify-center'
+            isMobile
+              ? 'relative w-12 h-12 rounded-full bg-black/60 flex items-center justify-center'
+              : isAndroid
+                ? 'relative w-12 h-12 rounded-full bg-black/40 flex items-center justify-center'
+                : 'relative w-12 h-12 rounded-full bg-black/20 backdrop-blur-md flex items-center justify-center'
           }
         >
           <ArrowLeft size={20} />
@@ -104,22 +109,24 @@ export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
             <motion.div
               key={page}
               custom={direction}
-              variants={isAndroid ? undefined : variants}
-              initial={isAndroid ? false : 'enter'}
-              animate={isAndroid ? { opacity: 1, x: 0 } : 'center'}
-              exit={isAndroid ? { opacity: 0 } : 'exit'}
+              variants={isMobile ? undefined : variants}
+              initial={isMobile ? false : 'enter'}
+              animate={isMobile ? { opacity: 1, x: 0 } : 'center'}
+              exit={isMobile ? { opacity: 0 } : 'exit'}
               transition={
-                isAndroid
-                  ? { opacity: { duration: 0.2 } }
-                  : {
-                      x: { type: 'spring', stiffness: 300, damping: 30 },
-                      opacity: { duration: 0.2 },
-                    }
+                isMobile
+                  ? { opacity: { duration: 0.3, ease: 'easeOut' } }
+                  : isAndroid
+                    ? { opacity: { duration: 0.2 } }
+                    : {
+                        x: { type: 'spring', stiffness: 300, damping: 30 },
+                        opacity: { duration: 0.2 },
+                      }
               }
               className="absolute h-full w-full"
               drag="x"
               dragConstraints={{ left: 0, right: 0 }}
-              dragElastic={isAndroid ? 0.5 : 1}
+              dragElastic={isMobile ? 0.3 : isAndroid ? 0.5 : 1}
               onDragEnd={(e, { offset, velocity }) => {
                 const swipe = Math.abs(offset.x) * velocity.x
                 if (swipe < -10000) {
@@ -133,7 +140,7 @@ export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
                 src={data.images[currentIndex].src}
                 alt={data.title}
                 fill
-                sizes="100vw"
+                sizes={isMobile ? '100vw' : '100vw'}
                 priority
                 loading="eager"
                 decoding="async"
@@ -142,21 +149,32 @@ export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
                 }`}
                 style={{ backgroundColor: 'black' }}
                 draggable={false}
-                unoptimized={isAndroid}
+                unoptimized={isMobile || isAndroid}
+                quality={isMobile ? 75 : 85}
                 onLoadingComplete={() => setIsLoading(false)}
               />
             </motion.div>
           </AnimatePresence>
         </div>
 
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none z-10" />
+        <div
+          className={`absolute inset-0 pointer-events-none z-10 ${
+            isMobile
+              ? 'bg-gradient-to-t from-black/80 via-black/20 to-transparent'
+              : 'bg-gradient-to-t from-black/90 via-black/40 to-transparent'
+          }`}
+        />
 
         <motion.div
-          style={{ y }}
+          style={isMobile ? {} : { y }}
           className="absolute inset-0 p-4 md:p-6 pb-28 flex flex-col justify-end pointer-events-none z-20"
         >
           <div className="text-white">
-            <h1 className="text-5xl md:text-6xl font-bold">{data.title}</h1>
+            <h1
+              className={`font-bold ${isMobile ? 'text-3xl' : 'text-5xl md:text-6xl'}`}
+            >
+              {data.title}
+            </h1>
             <p className="text-white/80">
               Рәсем {currentIndex + 1} / {data.images.length}
             </p>
@@ -186,7 +204,8 @@ export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
                           ? 'ring-2 ring-white scale-105'
                           : 'opacity-60 hover:opacity-100'
                       }`}
-                      unoptimized={isAndroid}
+                      unoptimized={isMobile || isAndroid}
+                      quality={isMobile ? 60 : 70}
                     />
                   </button>
                 ))}
