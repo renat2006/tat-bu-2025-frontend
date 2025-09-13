@@ -61,7 +61,7 @@ export function ARButton() {
       setDragOffset(max)
       // Небольшая задержка для плавности и отображения статуса
       setTimeout(() => {
-        router.push('/scan')
+        router.push('/explore')
       }, 250)
       // fallback на случай отмены перехода
       setTimeout(() => {

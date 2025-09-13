@@ -155,3 +155,6 @@ body.loading #page-content {
 .slick-slider {
   height: 100%;
 }
+
+/* Hide chrome on AR pages */
+body.hide-chrome header, body.hide-chrome nav { display: none !important; }
