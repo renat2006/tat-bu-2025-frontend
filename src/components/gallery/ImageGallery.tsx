@@ -220,7 +220,7 @@ export const ImageGallery = () => {
 
       <Hint
         position="top"
-        text="Потяните вниз, чтобы открыть альбом"
+        text="Альбомны ачу өчен аска тартыгыз"
         icon={ArrowDown}
         visible={
           (tutorialPhase === 'strict' && strictStep === 2) ||
@@ -231,7 +231,7 @@ export const ImageGallery = () => {
       />
       <Hint
         position="left"
-        text="Пролистните влево, чтобы перейти к следующему изображению"
+        text="Киләсе рәсемгә күчү өчен сулга шудырыгыз"
         icon={ArrowLeft}
         visible={
           (tutorialPhase === 'strict' && strictStep === 0) ||
@@ -242,7 +242,7 @@ export const ImageGallery = () => {
       />
       <Hint
         position="right"
-        text="Пролистните вправо, чтобы вернуться к предыдущему изображению"
+        text="Алдагы рәсемгә кайту өчен уңга шудырыгыз"
         icon={ArrowRight}
         visible={
           (tutorialPhase === 'strict' && strictStep === 1) ||

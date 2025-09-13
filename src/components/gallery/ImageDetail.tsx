@@ -132,7 +132,7 @@ export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
           <div className="text-white">
             <h1 className="text-5xl md:text-6xl font-bold">{data.title}</h1>
             <p className="text-white/80">
-              Image {currentIndex + 1} of {data.images.length}
+              Рәсем {currentIndex + 1} / {data.images.length}
             </p>
           </div>
         </motion.div>
@@ -169,7 +169,7 @@ export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
       <div className="relative z-10 p-4 md:p-6">
         <div className="flex items-center gap-3 mb-4 text-white">
           <Languages size={20} />
-          <h3 className="text-lg font-semibold">Vocabulary from this memory</h3>
+          <h3 className="text-lg font-semibold">Бу истәлектән сүзлек</h3>
         </div>
         <div className="grid grid-cols-2 gap-4 pb-24">
           {data.images[currentIndex].words.length > 0 ? (
@@ -185,7 +185,7 @@ export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
             ))
           ) : (
             <p className="text-white/60 text-sm col-span-2">
-              No vocabulary words identified in this image.
+              Бу рәсемдә сүзләр табылмады.
             </p>
           )}
         </div>
