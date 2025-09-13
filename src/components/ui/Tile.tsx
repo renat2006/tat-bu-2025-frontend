@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import Link from 'next/link'
 import { ReactNode } from 'react'
 
 type TileVariant = 'brand' | 'glass'
@@ -9,6 +10,7 @@ type TileProps = {
   variant?: TileVariant
   size?: 'square' | 'wide' | 'rect'
   right?: ReactNode
+  href?: string
 }
 
 export default function Tile({
@@ -17,6 +19,7 @@ export default function Tile({
   variant = 'brand',
   size = 'square',
   right,
+  href,
 }: TileProps) {
   const base = 'relative rounded-[28px] overflow-hidden'
   const bg =
@@ -31,18 +34,26 @@ export default function Tile({
         ? 'col-span-2 h-[112px]'
         : 'aspect-square'
 
-  return (
-    <div className={clsx(base, bg, pad, sizing, className)}>
-      <div
-        className={clsx(
-          'tile-inner h-full w-full flex items-center justify-between',
-        )}
-      >
-        <div className="flex-1 min-w-0">{children}</div>
-        {right && (
-          <div className="pl-5 shrink-0 flex items-center">{right}</div>
-        )}
-      </div>
+  const inner = (
+    <div
+      className={clsx(
+        'tile-inner h-full w-full flex items-center justify-between',
+      )}
+    >
+      <div className="flex-1 min-w-0">{children}</div>
+      {right && <div className="pl-5 shrink-0 flex items-center">{right}</div>}
     </div>
   )
+
+  const classes = clsx(base, bg, pad, sizing, className)
+
+  if (href) {
+    return (
+      <Link href={href} className={classes}>
+        {inner}
+      </Link>
+    )
+  }
+
+  return <div className={classes}>{inner}</div>
 }
