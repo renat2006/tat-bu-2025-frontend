@@ -32,7 +32,7 @@ const ImageCardComponent = ({
       }}
     >
       <div
-        className={`absolute inset-0 bg-neutral-800 ${
+        className={`absolute inset-0 bg-neutral-900 ${
           loaded ? 'opacity-0' : 'opacity-100'
         } transition-opacity duration-300 animate-pulse`}
       />

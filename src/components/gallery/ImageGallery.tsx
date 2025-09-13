@@ -32,6 +32,8 @@ export const ImageGallery = () => {
     right: false,
     down: false,
   })
+  const [loadedCount, setLoadedCount] = useState(0)
+  const [isLoading, setIsLoading] = useState(true)
   const x = useMotionValue(0)
 
   useEffect(() => {
@@ -46,6 +48,12 @@ export const ImageGallery = () => {
       }
     } catch {}
   }, [])
+
+  useEffect(() => {
+    if (loadedCount >= visibleCount) {
+      setIsLoading(false)
+    }
+  }, [loadedCount, visibleCount])
 
   const saveState = (
     phase: TutorialPhase,
@@ -75,6 +83,7 @@ export const ImageGallery = () => {
     setCurrent((c) => (c - 1 + items.length) % items.length)
 
   const handleDrag = (_event: unknown, info: PanInfo) => {
+    if (isLoading) return
     if (tutorialPhase === 'strict') {
       const isVerticalDrag = Math.abs(info.offset.y) > Math.abs(info.offset.x)
       const isLeftSwipe = !isVerticalDrag && info.offset.x < -20
@@ -87,6 +96,8 @@ export const ImageGallery = () => {
       else setHintDirection(null)
       return
     }
+
+    if (tutorialPhase !== 'hints') return
 
     if (Math.abs(info.offset.y) > Math.abs(info.offset.x)) {
       if (info.offset.y > 20) {
@@ -160,6 +171,7 @@ export const ImageGallery = () => {
   }
 
   const handleCardLoaded = (pos: number) => {
+    setLoadedCount((c) => c + 1)
     if (pos >= visibleCount - 1 && visibleCount < MAX_VISIBLE) {
       setVisibleCount((c) => Math.min(c + 1, MAX_VISIBLE))
     }
@@ -187,10 +199,11 @@ export const ImageGallery = () => {
           initial={{ opacity: 0 }}
           animate={{
             opacity:
-              (tutorialPhase === 'strict' && strictStep === 0) ||
-              (tutorialPhase === 'hints' &&
-                !hintCompletion.left &&
-                hintDirection === 'left')
+              !isLoading &&
+              ((tutorialPhase === 'strict' && strictStep === 0) ||
+                (tutorialPhase === 'hints' &&
+                  !hintCompletion.left &&
+                  hintDirection === 'left'))
                 ? 1
                 : 0,
           }}
@@ -207,10 +220,11 @@ export const ImageGallery = () => {
           initial={{ opacity: 0 }}
           animate={{
             opacity:
-              (tutorialPhase === 'strict' && strictStep === 1) ||
-              (tutorialPhase === 'hints' &&
-                !hintCompletion.right &&
-                hintDirection === 'right')
+              !isLoading &&
+              ((tutorialPhase === 'strict' && strictStep === 1) ||
+                (tutorialPhase === 'hints' &&
+                  !hintCompletion.right &&
+                  hintDirection === 'right'))
                 ? 1
                 : 0,
           }}
@@ -223,10 +237,11 @@ export const ImageGallery = () => {
         text="Альбомны ачу өчен аска тартыгыз"
         icon={ArrowDown}
         visible={
-          (tutorialPhase === 'strict' && strictStep === 2) ||
-          (tutorialPhase === 'hints' &&
-            !hintCompletion.down &&
-            hintDirection === 'down')
+          !isLoading &&
+          ((tutorialPhase === 'strict' && strictStep === 2) ||
+            (tutorialPhase === 'hints' &&
+              !hintCompletion.down &&
+              hintDirection === 'down'))
         }
       />
       <Hint
@@ -234,10 +249,11 @@ export const ImageGallery = () => {
         text="Киләсе рәсемгә күчү өчен сулга шудырыгыз"
         icon={ArrowLeft}
         visible={
-          (tutorialPhase === 'strict' && strictStep === 0) ||
-          (tutorialPhase === 'hints' &&
-            !hintCompletion.left &&
-            hintDirection === 'left')
+          !isLoading &&
+          ((tutorialPhase === 'strict' && strictStep === 0) ||
+            (tutorialPhase === 'hints' &&
+              !hintCompletion.left &&
+              hintDirection === 'left'))
         }
       />
       <Hint
@@ -245,10 +261,11 @@ export const ImageGallery = () => {
         text="Алдагы рәсемгә кайту өчен уңга шудырыгыз"
         icon={ArrowRight}
         visible={
-          (tutorialPhase === 'strict' && strictStep === 1) ||
-          (tutorialPhase === 'hints' &&
-            !hintCompletion.right &&
-            hintDirection === 'right')
+          !isLoading &&
+          ((tutorialPhase === 'strict' && strictStep === 1) ||
+            (tutorialPhase === 'hints' &&
+              !hintCompletion.right &&
+              hintDirection === 'right'))
         }
       />
       <AnimatePresence>
@@ -286,7 +303,7 @@ export const ImageGallery = () => {
                 damping: 28,
                 mass: 1,
               }}
-              drag={isTopCard}
+              drag={isTopCard && !isLoading}
               dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
               dragElastic={0.14}
               dragMomentum={false}

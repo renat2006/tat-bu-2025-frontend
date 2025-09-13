@@ -37,6 +37,7 @@ const variants = {
 
 export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
   const [[page, direction], setPage] = useState([0, 0])
+  const [isLoading, setIsLoading] = useState(true)
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const { scrollY } = useScroll({ container: scrollRef })
@@ -45,10 +46,13 @@ export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
   const headerOpacity = useTransform(scrollY, [0, 50], [0, 1])
 
   const paginate = (newDirection: number) => {
+    setIsLoading(true)
     setPage([page + newDirection, newDirection])
   }
 
   const changeImage = (index: number) => {
+    if (index === currentIndex) return
+    setIsLoading(true)
     const newDirection = index > page ? 1 : -1
     setPage([index, newDirection])
   }
@@ -116,9 +120,15 @@ export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
                 alt={data.title}
                 fill
                 priority
-                className="object-cover"
+                className={`object-cover transition-opacity duration-300 ${
+                  isLoading ? 'opacity-0' : 'opacity-100'
+                }`}
                 draggable={false}
+                onLoadingComplete={() => setIsLoading(false)}
               />
+              {isLoading && (
+                <div className="absolute inset-0 w-full h-full bg-neutral-900 animate-pulse" />
+              )}
             </motion.div>
           </AnimatePresence>
         </div>
@@ -129,12 +139,19 @@ export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
           style={{ y }}
           className="absolute inset-0 p-4 md:p-6 pb-28 flex flex-col justify-end pointer-events-none z-20"
         >
-          <div className="text-white">
-            <h1 className="text-5xl md:text-6xl font-bold">{data.title}</h1>
-            <p className="text-white/80">
-              Рәсем {currentIndex + 1} / {data.images.length}
-            </p>
-          </div>
+          {isLoading ? (
+            <div className="space-y-4">
+              <div className="h-12 w-3/4 bg-neutral-800 rounded-lg animate-pulse" />
+              <div className="h-6 w-1/2 bg-neutral-800 rounded-lg animate-pulse" />
+            </div>
+          ) : (
+            <div className="text-white">
+              <h1 className="text-5xl md:text-6xl font-bold">{data.title}</h1>
+              <p className="text-white/80">
+                Рәсем {currentIndex + 1} / {data.images.length}
+              </p>
+            </div>
+          )}
         </motion.div>
 
         {data.images.length > 1 && (
@@ -172,7 +189,14 @@ export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
           <h3 className="text-lg font-semibold">Бу истәлектән сүзлек</h3>
         </div>
         <div className="grid grid-cols-2 gap-4 pb-24">
-          {data.images[currentIndex].words.length > 0 ? (
+          {isLoading ? (
+            Array.from({ length: 4 }).map((_, index) => (
+              <div
+                key={index}
+                className="bg-neutral-900 rounded-3xl aspect-square animate-pulse"
+              />
+            ))
+          ) : data.images[currentIndex].words.length > 0 ? (
             data.images[currentIndex].words.map((word, index) => (
               <div
                 key={index}
