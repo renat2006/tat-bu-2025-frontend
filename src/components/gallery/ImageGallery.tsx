@@ -1,13 +1,13 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
-import { motion, AnimatePresence, PanInfo, useMotionValue } from 'framer-motion'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { ImageCard } from './ImageCard'
 import { mockAlbums } from '@/mocks/albums'
 import { ArrowLeft, ArrowRight, ArrowDown } from 'lucide-react'
 import { useImageDetailStore } from '@/stores/imageDetailStore'
 import { Hint } from './Hint'
 import { useIsAndroid } from '@/hooks/useIsAndroid'
+import { useDrag } from '@use-gesture/react'
 
 const CARD_OFFSET = 20
 const SCALE_FACTOR = 0.07
@@ -34,7 +34,16 @@ export const ImageGallery = () => {
   })
   const [loadedCount, setLoadedCount] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
-  const x = useMotionValue(0)
+  const containerRef = useRef<HTMLDivElement | null>(null)
+  const topCardRef = useRef<HTMLDivElement | null>(null)
+  const nextCardRef = useRef<HTMLDivElement | null>(null)
+  const prevCardRef = useRef<HTMLDivElement | null>(null)
+  const rafRef = useRef<number | null>(null)
+  const dragActiveRef = useRef(false)
+  const startXRef = useRef(0)
+  const startYRef = useRef(0)
+  const dxRef = useRef(0)
+  const dyRef = useRef(0)
   const isAndroid = useIsAndroid()
 
   useEffect(() => {
@@ -76,59 +85,188 @@ export const ImageGallery = () => {
   const nextCard = () => setCurrent((c) => (c + 1) % items.length)
   const prevCard = () =>
     setCurrent((c) => (c - 1 + items.length) % items.length)
-
-  const handleDrag = (_event: unknown, info: PanInfo) => {
-    if (isLoading) return
+  const updateHint = (dx: number, dy: number) => {
     if (tutorialPhase === 'strict') {
-      const isVerticalDrag = Math.abs(info.offset.y) > Math.abs(info.offset.x)
-      const isLeftSwipe = !isVerticalDrag && info.offset.x < -20
-      const isRightSwipe = !isVerticalDrag && info.offset.x > 20
-      const isDownSwipe = isVerticalDrag && info.offset.y > 20
-
+      const isVerticalDrag = Math.abs(dy) > Math.abs(dx)
+      const isLeftSwipe = !isVerticalDrag && dx < -20
+      const isRightSwipe = !isVerticalDrag && dx > 20
+      const isDownSwipe = isVerticalDrag && dy > 20
       if (strictStep === 0 && isLeftSwipe) setHintDirection('left')
       else if (strictStep === 1 && isRightSwipe) setHintDirection('right')
       else if (strictStep === 2 && isDownSwipe) setHintDirection('down')
       else setHintDirection(null)
       return
     }
-
     if (tutorialPhase !== 'hints') return
-
-    if (Math.abs(info.offset.y) > Math.abs(info.offset.x)) {
-      if (info.offset.y > 20) setHintDirection('down')
+    if (Math.abs(dy) > Math.abs(dx)) {
+      if (dy > 20) setHintDirection('down')
       else setHintDirection(null)
     } else {
-      if (info.offset.x < -20) setHintDirection('left')
-      else if (info.offset.x > 20) setHintDirection('right')
+      if (dx < -20) setHintDirection('left')
+      else if (dx > 20) setHintDirection('right')
       else setHintDirection(null)
     }
   }
 
-  const handleDragEnd = (_event: unknown, info: PanInfo) => {
+  const applyTopCardTransform = (dx: number, dy: number) => {
+    const el = topCardRef.current
+    if (!el) return
+    const translateY = Math.max(0, dy * 0.2)
+    const rotate = Math.max(-8, Math.min(8, dx * 0.04))
+    el.style.transition = 'none'
+    el.style.transform = `translate3d(${dx}px, ${translateY}px, 0) rotate(${rotate}deg)`
+
+    // neighbor cards preview
+    const nextEl = nextCardRef.current
+    const prevEl = prevCardRef.current
+    const tLeft = Math.max(0, Math.min(1, -dx / 140))
+    const tRight = Math.max(0, Math.min(1, dx / 140))
+    // base for neighbor layers
+    const baseY = CARD_OFFSET
+    const baseScale = 1 - SCALE_FACTOR
+    const baseOpacity = 1 - 0.06
+    if (nextEl) {
+      nextEl.style.transition = 'none'
+      const y = baseY * (1 - tLeft)
+      const s = baseScale + tLeft * (1 - baseScale)
+      const o = baseOpacity + tLeft * (1 - baseOpacity)
+      const r = -0.6 // keep slight rotation
+      nextEl.style.transform = `translate3d(0, ${y}px, 0) scale(${s}) rotate(${r}deg)`
+      nextEl.style.opacity = String(o)
+    }
+    if (prevEl) {
+      prevEl.style.transition = 'none'
+      const y = baseY * (1 - tRight)
+      const s = baseScale + tRight * (1 - baseScale)
+      const o = baseOpacity + tRight * (1 - baseOpacity)
+      const r = 0.6
+      prevEl.style.transform = `translate3d(0, ${y}px, 0) scale(${s}) rotate(${r}deg)`
+      prevEl.style.opacity = String(o)
+    }
+  }
+
+  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (isLoading) return
+    dragActiveRef.current = true
+    startXRef.current = e.clientX
+    startYRef.current = e.clientY
+    dxRef.current = 0
+    dyRef.current = 0
+    e.currentTarget.setPointerCapture(e.pointerId)
+    // prepare neighbor transitions
+    if (nextCardRef.current) nextCardRef.current.style.transition = 'none'
+    if (prevCardRef.current) prevCardRef.current.style.transition = 'none'
+  }
+
+  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!dragActiveRef.current) return
+    dxRef.current = e.clientX - startXRef.current
+    dyRef.current = e.clientY - startYRef.current
+    if (rafRef.current) cancelAnimationFrame(rafRef.current)
+    rafRef.current = requestAnimationFrame(() => {
+      applyTopCardTransform(dxRef.current, dyRef.current)
+      updateHint(dxRef.current, dyRef.current)
+    })
+  }
+
+  const settleTo = (transform: string, callback?: () => void) => {
+    const el = topCardRef.current
+    if (!el) {
+      callback?.()
+      return
+    }
+    const done = () => {
+      callback?.()
+    }
+    const handle = () => {
+      el.removeEventListener('transitionend', handle)
+      done()
+    }
+    el.addEventListener('transitionend', handle)
+    // set transition first, force reflow, then set transform to ensure transition fires
+    el.style.transition =
+      'transform 300ms cubic-bezier(0.22, 1, 0.36, 1), opacity 300ms ease'
+    // force reflow
+    void el.offsetHeight
+    requestAnimationFrame(() => {
+      el.style.transform = transform
+    })
+    // safety fallback in case transitionend doesn't fire
+    window.setTimeout(() => {
+      try {
+        el.removeEventListener('transitionend', handle)
+      } catch {}
+      done()
+    }, 450)
+  }
+
+  const onPointerEnd = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!dragActiveRef.current) return
+    dragActiveRef.current = false
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId)
+    } catch {}
+    const dx = dxRef.current
+    const dy = dyRef.current
     setHintDirection(null)
 
-    const dx = info.offset.x
-    const dy = info.offset.y
-    const vx = info.velocity.x || 0
-    const vy = info.velocity.y || 0
-
     const horizontal = Math.abs(dx) >= Math.abs(dy)
-    const isLeftSwipe = horizontal && (dx < -40 || vx < -600)
-    const isRightSwipe = horizontal && (dx > 40 || vx > 600)
-    const isDownSwipe = !horizontal && (dy > 50 || vy > 800)
+    const isLeftSwipe = horizontal && dx < -40
+    const isRightSwipe = horizontal && dx > 40
+    const isDownSwipe = !horizontal && dy > 60
+
+    const width = containerRef.current?.clientWidth || 400
+
+    const nextEl = nextCardRef.current
+    const prevEl = prevCardRef.current
+    const animateNeighborToTop = (neighbor: HTMLDivElement | null) => {
+      if (!neighbor) return
+      neighbor.style.transition =
+        'transform 300ms cubic-bezier(0.22, 1, 0.36, 1), opacity 300ms ease'
+      // force reflow
+      void neighbor.offsetHeight
+      neighbor.style.transform = 'translate3d(0, 0, 0) scale(1) rotate(0deg)'
+      neighbor.style.opacity = '1'
+    }
 
     if (tutorialPhase === 'strict') {
       if (strictStep === 0 && isLeftSwipe) {
-        nextCard()
-        setStrictStep(1)
-      } else if (strictStep === 1 && isRightSwipe) {
-        prevCard()
-        setStrictStep(2)
-      } else if (strictStep === 2 && isDownSwipe) {
-        selectAlbum(items[current])
-        setTutorialPhase('hints')
-        saveState('hints', hintCompletion)
+        animateNeighborToTop(nextEl)
+        settleTo(`translate3d(${-width}px, 0, 0) rotate(-12deg)`, () => {
+          nextCard()
+          setStrictStep(1)
+        })
+        return
       }
+      if (strictStep === 1 && isRightSwipe) {
+        animateNeighborToTop(prevEl)
+        settleTo(`translate3d(${width}px, 0, 0) rotate(12deg)`, () => {
+          prevCard()
+          setStrictStep(2)
+        })
+        return
+      }
+      if (strictStep === 2 && isDownSwipe) {
+        settleTo('translate3d(0, 120px, 0) rotate(0deg)', () => {
+          selectAlbum(items[current])
+          setTutorialPhase('hints')
+          saveState('hints', hintCompletion)
+        })
+        return
+      }
+      // revert
+      if (nextEl || prevEl) {
+        const resetNeighbor = (el: HTMLDivElement | null, rot: number) => {
+          if (!el) return
+          el.style.transition = 'transform 200ms ease, opacity 200ms ease'
+          void el.offsetHeight
+          el.style.transform = `translate3d(0, ${CARD_OFFSET}px, 0) scale(${1 - SCALE_FACTOR}) rotate(${rot}deg)`
+          el.style.opacity = String(1 - 0.06)
+        }
+        resetNeighbor(nextEl, -0.6)
+        resetNeighbor(prevEl, 0.6)
+      }
+      settleTo('translate3d(0, 0, 0) rotate(0deg)')
       return
     }
 
@@ -136,28 +274,179 @@ export const ImageGallery = () => {
     let phase = tutorialPhase
 
     if (isDownSwipe && !hintCompletion.down) {
-      selectAlbum(items[current])
+      settleTo('translate3d(0, 120px, 0) rotate(0deg)', () => {
+        selectAlbum(items[current])
+      })
       newCompletion.down = true
     } else if (isLeftSwipe && !hintCompletion.left) {
-      nextCard()
+      animateNeighborToTop(nextEl)
+      settleTo(`translate3d(${-width}px, 0, 0) rotate(-12deg)`, () => {
+        nextCard()
+      })
       newCompletion.left = true
     } else if (isRightSwipe && !hintCompletion.right) {
-      prevCard()
+      animateNeighborToTop(prevEl)
+      settleTo(`translate3d(${width}px, 0, 0) rotate(12deg)`, () => {
+        prevCard()
+      })
       newCompletion.right = true
     } else {
-      // Allow free navigation even after hints are done
-      if (isLeftSwipe) nextCard()
-      else if (isRightSwipe) prevCard()
-      else if (isDownSwipe) selectAlbum(items[current])
+      // free navigation after done
+      if (isLeftSwipe) {
+        animateNeighborToTop(nextEl)
+        settleTo(`translate3d(${-width}px, 0, 0) rotate(-12deg)`, nextCard)
+      } else if (isRightSwipe) {
+        animateNeighborToTop(prevEl)
+        settleTo(`translate3d(${width}px, 0, 0) rotate(12deg)`, prevCard)
+      } else if (isDownSwipe)
+        settleTo('translate3d(0, 120px, 0) rotate(0deg)', () =>
+          selectAlbum(items[current]),
+        )
+      else settleTo('translate3d(0, 0, 0) rotate(0deg)')
     }
 
     if (newCompletion.left && newCompletion.right && newCompletion.down)
       phase = 'done'
-
     setHintCompletion(newCompletion)
     setTutorialPhase(phase)
     saveState(phase, newCompletion)
   }
+
+  // Gesture handler via use-gesture for robust cross-device swipes
+  const bindTop = useDrag(
+    ({ first, last, down, movement: [mx, my] }) => {
+      if (isLoading) return
+      if (first) {
+        dragActiveRef.current = true
+        dxRef.current = 0
+        dyRef.current = 0
+        if (nextCardRef.current) nextCardRef.current.style.transition = 'none'
+        if (prevCardRef.current) prevCardRef.current.style.transition = 'none'
+      }
+      dxRef.current = mx
+      dyRef.current = my
+      if (down) {
+        if (rafRef.current) cancelAnimationFrame(rafRef.current)
+        rafRef.current = requestAnimationFrame(() => {
+          applyTopCardTransform(dxRef.current, dyRef.current)
+          updateHint(dxRef.current, dyRef.current)
+        })
+      }
+      if (last) {
+        // synthesize end
+        dragActiveRef.current = false
+        const dx = dxRef.current
+        const dy = dyRef.current
+        setHintDirection(null)
+
+        const horizontal = Math.abs(dx) >= Math.abs(dy)
+        const isLeftSwipe = horizontal && dx < -40
+        const isRightSwipe = horizontal && dx > 40
+        const isDownSwipe = !horizontal && dy > 60
+
+        const width = containerRef.current?.clientWidth || 400
+
+        const nextEl = nextCardRef.current
+        const prevEl = prevCardRef.current
+        const animateNeighborToTop = (neighbor: HTMLDivElement | null) => {
+          if (!neighbor) return
+          neighbor.style.transition =
+            'transform 300ms cubic-bezier(0.22, 1, 0.36, 1), opacity 300ms ease'
+          void neighbor.offsetHeight
+          neighbor.style.transform =
+            'translate3d(0, 0, 0) scale(1) rotate(0deg)'
+          neighbor.style.opacity = '1'
+        }
+
+        if (tutorialPhase === 'strict') {
+          if (strictStep === 0 && isLeftSwipe) {
+            animateNeighborToTop(nextEl)
+            settleTo(`translate3d(${-width}px, 0, 0) rotate(-12deg)`, () => {
+              nextCard()
+              setStrictStep(1)
+            })
+            return
+          }
+          if (strictStep === 1 && isRightSwipe) {
+            animateNeighborToTop(prevEl)
+            settleTo(`translate3d(${width}px, 0, 0) rotate(12deg)`, () => {
+              prevCard()
+              setStrictStep(2)
+            })
+            return
+          }
+          if (strictStep === 2 && isDownSwipe) {
+            settleTo('translate3d(0, 120px, 0) rotate(0deg)', () => {
+              selectAlbum(items[current])
+              setTutorialPhase('hints')
+              saveState('hints', hintCompletion)
+            })
+            return
+          }
+          if (nextEl || prevEl) {
+            const resetNeighbor = (el: HTMLDivElement | null, rot: number) => {
+              if (!el) return
+              el.style.transition = 'transform 200ms ease, opacity 200ms ease'
+              void el.offsetHeight
+              el.style.transform = `translate3d(0, ${CARD_OFFSET}px, 0) scale(${1 - SCALE_FACTOR}) rotate(${rot}deg)`
+              el.style.opacity = String(1 - 0.06)
+            }
+            resetNeighbor(nextEl, -0.6)
+            resetNeighbor(prevEl, 0.6)
+          }
+          settleTo('translate3d(0, 0, 0) rotate(0deg)')
+          return
+        }
+
+        let newCompletion = { ...hintCompletion }
+        let phase = tutorialPhase
+
+        if (isDownSwipe && !hintCompletion.down) {
+          settleTo('translate3d(0, 120px, 0) rotate(0deg)', () => {
+            selectAlbum(items[current])
+          })
+          newCompletion.down = true
+        } else if (isLeftSwipe && !hintCompletion.left) {
+          animateNeighborToTop(nextEl)
+          settleTo(`translate3d(${-width}px, 0, 0) rotate(-12deg)`, () => {
+            nextCard()
+          })
+          newCompletion.left = true
+        } else if (isRightSwipe && !hintCompletion.right) {
+          animateNeighborToTop(prevEl)
+          settleTo(`translate3d(${width}px, 0, 0) rotate(12deg)`, () => {
+            prevCard()
+          })
+          newCompletion.right = true
+        } else {
+          if (isLeftSwipe) {
+            animateNeighborToTop(nextEl)
+            settleTo(`translate3d(${-width}px, 0, 0) rotate(-12deg)`, nextCard)
+          } else if (isRightSwipe) {
+            animateNeighborToTop(prevEl)
+            settleTo(`translate3d(${width}px, 0, 0) rotate(12deg)`, prevCard)
+          } else if (isDownSwipe) {
+            settleTo('translate3d(0, 120px, 0) rotate(0deg)', () =>
+              selectAlbum(items[current]),
+            )
+          } else {
+            settleTo('translate3d(0, 0, 0) rotate(0deg)')
+          }
+        }
+
+        if (newCompletion.left && newCompletion.right && newCompletion.down)
+          phase = 'done'
+        setHintCompletion(newCompletion)
+        setTutorialPhase(phase)
+        saveState(phase, newCompletion)
+      }
+    },
+    {
+      filterTaps: true,
+      threshold: 6,
+      eventOptions: { passive: false },
+    },
+  )
 
   const handleCardLoaded = (pos: number) => {
     if (pos === 0) setIsLoading(false)
@@ -167,71 +456,85 @@ export const ImageGallery = () => {
   }
 
   return (
-    <div className="relative w-full h-[600px] md:h-[640px] flex items-center justify-center overflow-hidden">
-      <motion.div
+    <div
+      ref={containerRef}
+      className="relative w-full h-[600px] md:h-[640px] flex items-center justify-center overflow-hidden"
+    >
+      <div
         className="pointer-events-none absolute h-full w-[min(740px,calc(100%-16px))] z-10"
         style={
           isAndroid
-            ? { x }
+            ? undefined
             : {
                 maskImage: NOTCH_MASK as unknown as string,
                 WebkitMaskImage: NOTCH_MASK as unknown as string,
                 maskSize: '100% 100%',
-                x,
               }
         }
       >
-        <motion.div
+        <div
           className="absolute inset-y-0 left-0 w-1/2"
           style={
             isAndroid
-              ? { willChange: 'opacity' }
+              ? {
+                  opacity:
+                    !isLoading &&
+                    ((tutorialPhase === 'strict' && strictStep === 0) ||
+                      (tutorialPhase === 'hints' &&
+                        !hintCompletion.left &&
+                        hintDirection === 'left'))
+                      ? 1
+                      : 0,
+                  transition: 'opacity 200ms ease',
+                }
               : {
                   background:
                     'linear-gradient(to right, rgba(255, 0, 0, 0.35), transparent 80%)',
                   filter: 'blur(18px)',
-                  willChange: 'opacity',
+                  opacity:
+                    !isLoading &&
+                    ((tutorialPhase === 'strict' && strictStep === 0) ||
+                      (tutorialPhase === 'hints' &&
+                        !hintCompletion.left &&
+                        hintDirection === 'left'))
+                      ? 1
+                      : 0,
+                  transition: 'opacity 200ms ease',
                 }
           }
-          initial={{ opacity: 0 }}
-          animate={{
-            opacity:
-              !isLoading &&
-              ((tutorialPhase === 'strict' && strictStep === 0) ||
-                (tutorialPhase === 'hints' &&
-                  !hintCompletion.left &&
-                  hintDirection === 'left'))
-                ? 1
-                : 0,
-          }}
-          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
         />
-        <motion.div
+        <div
           className="absolute inset-y-0 right-0 w-1/2"
           style={
             isAndroid
-              ? { willChange: 'opacity' }
+              ? {
+                  opacity:
+                    !isLoading &&
+                    ((tutorialPhase === 'strict' && strictStep === 1) ||
+                      (tutorialPhase === 'hints' &&
+                        !hintCompletion.right &&
+                        hintDirection === 'right'))
+                      ? 1
+                      : 0,
+                  transition: 'opacity 200ms ease',
+                }
               : {
                   background:
                     'linear-gradient(to left, rgba(0, 255, 255, 0.35), transparent 80%)',
                   filter: 'blur(18px)',
-                  willChange: 'opacity',
+                  opacity:
+                    !isLoading &&
+                    ((tutorialPhase === 'strict' && strictStep === 1) ||
+                      (tutorialPhase === 'hints' &&
+                        !hintCompletion.right &&
+                        hintDirection === 'right'))
+                      ? 1
+                      : 0,
+                  transition: 'opacity 200ms ease',
                 }
           }
-          initial={{ opacity: 0 }}
-          animate={{
-            opacity:
-              !isLoading &&
-              ((tutorialPhase === 'strict' && strictStep === 1) ||
-                (tutorialPhase === 'hints' &&
-                  !hintCompletion.right &&
-                  hintDirection === 'right'))
-                ? 1
-                : 0,
-          }}
-          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
         />
-      </motion.div>
+      </div>
 
       <Hint
         position="top"
@@ -269,50 +572,60 @@ export const ImageGallery = () => {
               hintDirection === 'right'))
         }
       />
-      <AnimatePresence>
-        {windowItems.map((it, pos) => {
+      {/* render previous card under the top for right-swipe preview */}
+      {items.length > 1 &&
+        (() => {
+          const prevIdx = (current - 1 + items.length) % items.length
+          const card = items[prevIdx]
+          const baseY = CARD_OFFSET
+          const baseScale = 1 - SCALE_FACTOR
+          const baseOpacity = 1 - 0.06
+          return (
+            <div
+              key={`prev-${card.id}`}
+              ref={prevCardRef}
+              className="absolute w-[min(740px,calc(100%-16px))] h-full pointer-events-none"
+              style={{
+                transformOrigin: 'top center',
+                zIndex: windowItems.length - 1,
+                transform: `translate3d(0, ${baseY}px, 0) scale(${baseScale}) rotate(0.6deg)`,
+                opacity: baseOpacity,
+                willChange: isAndroid ? 'opacity' : 'transform, opacity',
+                backfaceVisibility: isAndroid ? undefined : 'hidden',
+                WebkitBackfaceVisibility: isAndroid ? undefined : 'hidden',
+              }}
+            >
+              <ImageCard data={card} preload />
+            </div>
+          )
+        })()}
+
+      {windowItems
+        .slice(0, Math.min(MAX_VISIBLE, windowItems.length))
+        .map((it, pos) => {
           const card = items[it.idx]
           const isTopCard = pos === 0
-
+          const baseY = pos * CARD_OFFSET
+          const baseScale = 1 - pos * SCALE_FACTOR
+          const baseOpacity = 1 - pos * 0.06
           return (
-            <motion.div
+            <div
               key={card.id}
+              ref={isTopCard ? topCardRef : pos === 1 ? nextCardRef : undefined}
               className={`absolute w-[min(740px,calc(100%-16px))] h-full ${
                 isTopCard ? '' : 'pointer-events-none'
               }`}
               style={{
                 transformOrigin: 'top center',
                 zIndex: windowItems.length - pos,
+                transform: `translate3d(0, ${baseY}px, 0) scale(${baseScale}) rotate(${pos > 0 ? (pos % 2 === 0 ? -0.6 : 0.6) : 0}deg)`,
+                opacity: baseOpacity,
                 willChange: isAndroid ? 'opacity' : 'transform, opacity',
                 backfaceVisibility: isAndroid ? undefined : 'hidden',
                 WebkitBackfaceVisibility: isAndroid ? undefined : 'hidden',
-                x: isTopCard ? x : undefined,
+                touchAction: isTopCard ? 'none' : undefined,
               }}
-              initial={false}
-              animate={{
-                y: pos * CARD_OFFSET,
-                scale: 1 - pos * SCALE_FACTOR,
-                opacity: 1 - pos * 0.06,
-                rotate: pos > 0 ? (pos % 2 === 0 ? -0.6 : 0.6) : 0,
-              }}
-              transition={{
-                type: 'spring',
-                stiffness: 250,
-                damping: 28,
-                mass: 1,
-              }}
-              drag={isTopCard && !isLoading}
-              dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
-              dragElastic={0.14}
-              dragMomentum={false}
-              onDrag={handleDrag}
-              onDragEnd={handleDragEnd}
-              exit={{
-                x: pos === 0 ? (it.idx > current ? -300 : 300) : 0,
-                opacity: 0,
-                scale: 0.9,
-                transition: { type: 'spring', stiffness: 260, damping: 28 },
-              }}
+              {...(isTopCard ? (bindTop() as unknown as object) : {})}
             >
               <ImageCard
                 data={card}
@@ -320,10 +633,9 @@ export const ImageGallery = () => {
                 preload
                 onLoaded={() => handleCardLoaded(pos)}
               />
-            </motion.div>
+            </div>
           )
         })}
-      </AnimatePresence>
     </div>
   )
 }
