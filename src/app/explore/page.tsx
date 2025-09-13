@@ -46,6 +46,26 @@ function toBox(b: [number, number, number, number]) {
   return { x: x1, y: y1, w, h }
 }
 
+function toRectFromAny(
+  b: [number, number, number, number],
+  vw: number,
+  vh: number,
+) {
+  const allIn01 = b.every((v) => v >= 0 && v <= 1.0001)
+  if (allIn01) {
+    const [xcN, ycN, wN, hN] = b
+    const xc = xcN * vw
+    const yc = ycN * vh
+    const w = wN * vw
+    const h = hN * vh
+    const x1 = xc - w / 2
+    const y1 = yc - h / 2
+    return { x: x1, y: y1, w: Math.max(0, w), h: Math.max(0, h) }
+  }
+  const [x1, y1, x2, y2] = b
+  return { x: x1, y: y1, w: Math.max(0, x2 - x1), h: Math.max(0, y2 - y1) }
+}
+
 function track(prev: Tracked[], rsp: ProcessImageResponse | null): Tracked[] {
   const detections = rsp?.detections ?? []
   const next: Tracked[] = []
@@ -103,6 +123,48 @@ function Bubble({
     >
       <span className="font-bold">{tt}</span>
       <span className="opacity-70 ml-1">({ru})</span>
+    </div>
+  )
+}
+
+function ARAnchorFX({ x, y, size }: { x: number; y: number; size: number }) {
+  const radius = Math.max(10, Math.min(36, Math.round(size * 0.25)))
+  const ring = Math.round(radius * 2)
+  return (
+    <div className="absolute pointer-events-none" style={{ left: 0, top: 0 }}>
+      <div
+        className="relative"
+        style={{ transform: `translate(${x}px, ${y}px) translate(-50%, -50%)` }}
+      >
+        <div
+          className="absolute rounded-full bg-[rgba(188,251,108,0.25)] animate-ping"
+          style={{ width: ring, height: ring, left: -radius, top: -radius }}
+        />
+        <div
+          className="absolute rounded-full border border-[rgba(188,251,108,0.45)]"
+          style={{ width: ring, height: ring, left: -radius, top: -radius }}
+        />
+        <div className="w-2 h-2 rounded-full bg-[rgb(188,251,108)] shadow-[0_0_12px_rgba(188,251,108,0.65)]" />
+        <div
+          className="absolute rounded-full animate-spin"
+          style={{
+            width: ring + 10,
+            height: ring + 10,
+            left: -radius - 5,
+            top: -radius - 5,
+            animationDuration: '6s',
+          }}
+        >
+          <div
+            className="absolute w-1.5 h-1.5 rounded-full bg-[rgb(188,251,108)] shadow-[0_0_10px_rgba(188,251,108,0.6)]"
+            style={{ left: '50%', top: 0, transform: 'translateX(-50%)' }}
+          />
+          <div
+            className="absolute w-1 h-1 rounded-full bg-[rgba(188,251,108,0.7)]"
+            style={{ left: '50%', bottom: 0, transform: 'translateX(-50%)' }}
+          />
+        </div>
+      </div>
     </div>
   )
 }
@@ -225,6 +287,8 @@ export default function ExplorePage() {
     const dh = vh * scale
     const offX = (cw - dw) / 2
     const offY = (ch - dh) / 2
+    const CAL_X = 40
+    const CAL_Y = 40
 
     const dets = json.detections || []
     return dets
@@ -233,13 +297,13 @@ export default function ExplorePage() {
           | [number, number, number, number]
           | undefined
         if (!b) return null
-        const box = toBox(b)
+        const box = toRectFromAny(b, vw, vh)
         return {
           id: `${Date.now()}_${i}`,
-          x: box.x * scale + (box.w * scale) / 2 + offX,
-          y: box.y * scale + offY,
-          w: box.w * scale,
-          h: box.h * scale,
+          x: Math.round(box.x * scale + (box.w * scale) / 2 + offX + CAL_X),
+          y: Math.round(box.y * scale + (box.h * scale) / 2 + offY + CAL_Y),
+          w: Math.round(box.w * scale),
+          h: Math.round(box.h * scale),
           tt: ((d as any).class_ru as string) || json.objects_ru?.[i] || '',
           ru: ((d as any).class_ru as string) || json.objects_ru?.[i] || '',
         } as Tracked
@@ -328,7 +392,7 @@ export default function ExplorePage() {
   useEffect(() => {
     const id = setInterval(() => {
       if (!loading) captureLive()
-    }, 4500)
+    }, 3000)
     return () => clearInterval(id)
   }, [loading, captureLive])
 
@@ -427,8 +491,8 @@ export default function ExplorePage() {
 
   return (
     <main className="min-h-screen h-[100svh] pb-0 pt-0 overflow-hidden">
-      {/* скрыть хедер/навигацию на AR-странице */}
-      <style>{`body { overscroll-behavior: none; }`}</style>
+      {/* скрыть хедер/навигацию на этой странице + отключить pull-to-refresh */}
+      <style>{`body { overscroll-behavior: none; } header, nav { display: none !important; }`}</style>
 
       {/* размеры: высота нижней панели 170px */}
       <div
@@ -464,7 +528,13 @@ export default function ExplorePage() {
           ref={camRef}
           audio={false}
           screenshotFormat="image/jpeg"
-          videoConstraints={{ facingMode: 'environment' }}
+          screenshotQuality={0.6}
+          videoConstraints={{
+            facingMode: 'environment',
+            width: { ideal: 640 },
+            height: { ideal: 360 },
+          }}
+          mirrored={false}
           className="w-full h-full object-cover"
           onUserMediaError={(e) =>
             setCameraError((e as any)?.message || 'Камера недоступна')
@@ -483,23 +553,10 @@ export default function ExplorePage() {
           </div>
         )}
 
-        {/* bbox highlight */}
+        {/* AR anchors + bubbles */}
         {bubbles.map((b) => (
-          <div
-            key={b.id + '_bbox'}
-            className="absolute rounded-2xl ring-2 ring-[rgba(188,251,108,0.6)] shadow-[0_0_24px_rgba(188,251,108,0.25)] transition-all duration-200 z-10"
-            style={{ left: b.x - b.w / 2, top: b.y, width: b.w, height: b.h }}
-          />
-        ))}
-
-        {/* connecting line + bubbles */}
-        {bubbles.map((b) => (
-          <div
-            key={b.id}
-            className="absolute z-30"
-            style={{ left: b.x, top: b.y }}
-          >
-            <div className="absolute left-1/2 -translate-x-1/2 -translate-y-full w-[2px] h-6 bg-[rgba(188,251,108,0.6)]" />
+          <div key={b.id} className="absolute z-30" style={{ left: 0, top: 0 }}>
+            <ARAnchorFX x={b.x} y={b.y} size={Math.max(b.w, b.h)} />
             <Bubble
               x={b.x}
               y={b.y}
