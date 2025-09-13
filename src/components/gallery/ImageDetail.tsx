@@ -1,9 +1,8 @@
 'use client'
 
-import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
 import { ArrowLeft, Languages } from 'lucide-react'
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { Album } from '@/types/gallery'
 import { useIsAndroid } from '@/hooks/useIsAndroid'
 
@@ -19,34 +18,29 @@ const cardColors = [
   'bg-violet-400/80 text-violet-950',
 ]
 
-const variants = {
-  enter: (direction: number) => ({
-    x: direction > 0 ? 1000 : -1000,
-    opacity: 0,
-  }),
-  center: {
-    zIndex: 1,
-    x: 0,
-    opacity: 1,
-  },
-  exit: (direction: number) => ({
-    zIndex: 0,
-    x: direction < 0 ? 1000 : -1000,
-    opacity: 0,
-  }),
-}
-
 export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
   const [[page, direction], setPage] = useState([0, 0])
   const [isLoading, setIsLoading] = useState(true)
+  const [isVisible, setIsVisible] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
   const isAndroid = useIsAndroid()
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
+  const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(
+    null,
+  )
+  const [dragOffset, setDragOffset] = useState(0)
 
-  const scrollRef = useRef<HTMLDivElement>(null)
-  const { scrollY } = useScroll({ container: scrollRef })
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
-  const y = useTransform(scrollY, [0, 100], [0, -50], { clamp: false })
-  const headerOpacity = useTransform(scrollY, [0, 50], [0, 1])
+  useEffect(() => {
+    setIsVisible(true)
+  }, [])
 
   const paginate = (newDirection: number) => {
     setIsLoading(true)
@@ -63,98 +57,108 @@ export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
   const currentIndex =
     ((page % data.images.length) + data.images.length) % data.images.length
 
+  const handleDragStart = (e: React.TouchEvent | React.MouseEvent) => {
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
+    setDragStart({ x: clientX, y: clientY })
+    setDragOffset(0)
+  }
+
+  const handleDragMove = (e: React.TouchEvent | React.MouseEvent) => {
+    if (!dragStart) return
+
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
+    const offsetX = clientX - dragStart.x
+    setDragOffset(offsetX)
+  }
+
+  const handleDragEnd = () => {
+    if (!dragStart) return
+
+    const threshold = 50
+    const velocity = Math.abs(dragOffset) > threshold
+
+    if (velocity) {
+      if (dragOffset < -threshold) {
+        paginate(1)
+      } else if (dragOffset > threshold) {
+        paginate(-1)
+      }
+    }
+
+    setDragStart(null)
+    setDragOffset(0)
+  }
+
   return (
-    <motion.div
-      ref={scrollRef}
-      className="fixed inset-0 z-[100] bg-black overflow-y-auto"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1, transition: { duration: 0.3, ease: 'easeOut' } }}
-      exit={{ opacity: 0, transition: { duration: 0.3, ease: 'easeIn' } }}
+    <div
+      className={`fixed inset-0 z-[100] bg-black overflow-y-auto transition-opacity duration-300 ${
+        isVisible ? 'opacity-100' : 'opacity-0'
+      }`}
     >
       <header className="fixed top-0 left-0 right-0 p-4 md:p-6 flex items-center justify-between text-white z-30">
-        <motion.div
-          className={
+        <div
+          className={`absolute inset-0 transition-opacity duration-300 ${
             isMobile
-              ? 'absolute inset-0 bg-black/60'
+              ? 'bg-black/60'
               : isAndroid
-                ? 'absolute inset-0 bg-black/40'
-                : 'absolute inset-0 bg-black/20 backdrop-blur-lg'
-          }
-          style={{ opacity: headerOpacity }}
+                ? 'bg-black/40'
+                : 'bg-black/20 backdrop-blur-lg'
+          }`}
         />
         <button
           onClick={onClose}
-          className={
+          className={`relative w-12 h-12 rounded-full flex items-center justify-center transition-colors duration-200 ${
             isMobile
-              ? 'relative w-12 h-12 rounded-full bg-black/60 flex items-center justify-center'
+              ? 'bg-black/60 hover:bg-black/80'
               : isAndroid
-                ? 'relative w-12 h-12 rounded-full bg-black/40 flex items-center justify-center'
-                : 'relative w-12 h-12 rounded-full bg-black/20 backdrop-blur-md flex items-center justify-center'
-          }
+                ? 'bg-black/40 hover:bg-black/60'
+                : 'bg-black/20 backdrop-blur-md hover:bg-black/40'
+          }`}
         >
           <ArrowLeft size={20} />
         </button>
-        <motion.span
-          style={{ opacity: headerOpacity }}
-          className="relative font-semibold"
-        >
-          {data.title}
-        </motion.span>
+        <span className="relative font-semibold">{data.title}</span>
         <div className="w-12 h-12" />
       </header>
 
       <div className="relative w-full h-[65vh] md:h-[75vh]">
         <div className="absolute inset-0 overflow-hidden">
-          <AnimatePresence initial={false} custom={direction}>
-            <motion.div
-              key={page}
-              custom={direction}
-              variants={isMobile ? undefined : variants}
-              initial={isMobile ? false : 'enter'}
-              animate={isMobile ? { opacity: 1, x: 0 } : 'center'}
-              exit={isMobile ? { opacity: 0 } : 'exit'}
-              transition={
-                isMobile
-                  ? { opacity: { duration: 0.3, ease: 'easeOut' } }
-                  : isAndroid
-                    ? { opacity: { duration: 0.2 } }
-                    : {
-                        x: { type: 'spring', stiffness: 300, damping: 30 },
-                        opacity: { duration: 0.2 },
-                      }
-              }
-              className="absolute h-full w-full"
-              drag="x"
-              dragConstraints={{ left: 0, right: 0 }}
-              dragElastic={isMobile ? 0.3 : isAndroid ? 0.5 : 1}
-              onDragEnd={(e, { offset, velocity }) => {
-                const swipe = Math.abs(offset.x) * velocity.x
-                if (swipe < -10000) {
-                  paginate(1)
-                } else if (swipe > 10000) {
-                  paginate(-1)
-                }
-              }}
-            >
-              <Image
-                src={data.images[currentIndex].src}
-                alt={data.title}
-                fill
-                sizes={isMobile ? '100vw' : '100vw'}
-                priority
-                loading="eager"
-                decoding="async"
-                className={`object-cover transition-opacity duration-300 ease-out ${
-                  isLoading ? 'opacity-0' : 'opacity-100'
-                }`}
-                style={{ backgroundColor: 'black' }}
-                draggable={false}
-                unoptimized={isMobile || isAndroid}
-                quality={isMobile ? 75 : 85}
-                onLoadingComplete={() => setIsLoading(false)}
-              />
-            </motion.div>
-          </AnimatePresence>
+          <div
+            className="absolute h-full w-full"
+            style={{
+              transform:
+                dragOffset !== 0
+                  ? `translateX(${dragOffset}px)`
+                  : 'translateX(0)',
+              transition: dragOffset === 0 ? 'transform 0.3s ease-out' : 'none',
+            }}
+            onTouchStart={handleDragStart}
+            onTouchMove={handleDragMove}
+            onTouchEnd={handleDragEnd}
+            onMouseDown={handleDragStart}
+            onMouseMove={handleDragMove}
+            onMouseUp={handleDragEnd}
+            onMouseLeave={handleDragEnd}
+          >
+            <Image
+              src={data.images[currentIndex].src}
+              alt={data.title}
+              fill
+              sizes="100vw"
+              priority
+              loading="eager"
+              decoding="async"
+              className={`object-cover transition-opacity duration-300 ease-out ${
+                isLoading ? 'opacity-0' : 'opacity-100'
+              }`}
+              style={{ backgroundColor: 'black' }}
+              draggable={false}
+              unoptimized={isMobile || isAndroid}
+              quality={isMobile ? 75 : 85}
+              onLoadingComplete={() => setIsLoading(false)}
+            />
+          </div>
         </div>
 
         <div
@@ -165,10 +169,7 @@ export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
           }`}
         />
 
-        <motion.div
-          style={isMobile ? {} : { y }}
-          className="absolute inset-0 p-4 md:p-6 pb-28 flex flex-col justify-end pointer-events-none z-20"
-        >
+        <div className="absolute inset-0 p-4 md:p-6 pb-28 flex flex-col justify-end pointer-events-none z-20">
           <div className="text-white">
             <h1
               className={`font-bold ${isMobile ? 'text-3xl' : 'text-5xl md:text-6xl'}`}
@@ -179,7 +180,7 @@ export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
               Рәсем {currentIndex + 1} / {data.images.length}
             </p>
           </div>
-        </motion.div>
+        </div>
 
         {data.images.length > 1 && (
           <div className="absolute bottom-4 left-0 right-0 z-20">
@@ -189,7 +190,7 @@ export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
                   <button
                     key={index}
                     onClick={() => changeImage(index)}
-                    className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0"
+                    className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 transition-all duration-200"
                   >
                     <Image
                       src={image.src}
@@ -225,7 +226,7 @@ export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
             data.images[currentIndex].words.map((word, index) => (
               <div
                 key={index}
-                className={`rounded-3xl p-4 text-white aspect-square flex flex-col justify-center items-center text-center ${
+                className={`rounded-3xl p-4 text-white aspect-square flex flex-col justify-center items-center text-center transition-all duration-200 hover:scale-105 ${
                   cardColors[index % cardColors.length]
                 }`}
               >
@@ -239,6 +240,6 @@ export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
           )}
         </div>
       </div>
-    </motion.div>
+    </div>
   )
 }

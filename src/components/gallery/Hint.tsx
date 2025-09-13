@@ -1,6 +1,5 @@
 'use client'
 
-import { motion } from 'framer-motion'
 import { LucideIcon } from 'lucide-react'
 
 interface HintProps {
@@ -24,35 +23,28 @@ export const Hint = ({ position, text, icon: Icon, visible }: HintProps) => {
     }
   }
 
-  const getAnimation = () => {
+  const getAnimationClasses = () => {
     switch (position) {
       case 'top':
-        return {
-          initial: { opacity: 0, y: -20 },
-          animate: { opacity: 1, y: 0 },
-          exit: { opacity: 0, y: -20 },
-        }
+        return visible
+          ? 'opacity-100 translate-y-0'
+          : 'opacity-0 -translate-y-5'
       case 'left':
-        return {
-          initial: { opacity: 0, x: -20 },
-          animate: { opacity: 1, x: 0 },
-          exit: { opacity: 0, x: -20 },
-        }
+        return visible
+          ? 'opacity-100 translate-x-0'
+          : 'opacity-0 -translate-x-5'
       case 'right':
-        return {
-          initial: { opacity: 0, x: 20 },
-          animate: { opacity: 1, x: 0 },
-          exit: { opacity: 0, x: 20 },
-        }
+        return visible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-5'
+      default:
+        return visible ? 'opacity-100' : 'opacity-0'
     }
   }
 
+  if (!visible) return null
+
   return (
-    <motion.div
-      className={`absolute z-50 px-5 py-3 rounded-2xl bg-white/10 ring-1 ring-white/15 text-white text-sm md:text-base backdrop-blur-xl shadow-xl flex items-center gap-3 pointer-events-none ${getPositionClasses()}`}
-      initial={getAnimation().initial}
-      animate={visible ? getAnimation().animate : getAnimation().exit}
-      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+    <div
+      className={`absolute z-50 px-5 py-3 rounded-2xl bg-white/10 ring-1 ring-white/15 text-white text-sm md:text-base backdrop-blur-xl shadow-xl flex items-center gap-3 pointer-events-none transition-all duration-300 ease-out ${getPositionClasses()} ${getAnimationClasses()}`}
     >
       {Icon && (
         <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-white/20 flex-shrink-0">
@@ -60,6 +52,6 @@ export const Hint = ({ position, text, icon: Icon, visible }: HintProps) => {
         </span>
       )}
       {text}
-    </motion.div>
+    </div>
   )
 }

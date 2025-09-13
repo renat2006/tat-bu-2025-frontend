@@ -34,7 +34,8 @@ body {
   transition: opacity 0.5s ease-in-out;
 }
 
-#initial-preloader img {
+#initial-preloader img,
+.preloader-logo {
   width: 120px;
   height: 120px;
   animation: pulse 1.5s ease-in-out infinite;
@@ -66,4 +67,74 @@ body:not(.loading) #initial-preloader {
 
 body.loading #page-content {
   opacity: 0;
+}
+
+/* Gallery animations */
+.gallery-card {
+  transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+}
+
+.gallery-card:hover {
+  transform: scale(1.02);
+}
+
+/* Modal animations */
+.modal-enter {
+  animation: modalEnter 0.3s ease-out forwards;
+}
+
+.modal-exit {
+  animation: modalExit 0.3s ease-in forwards;
+}
+
+@keyframes modalEnter {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes modalExit {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+
+/* Image loading animations */
+.image-loading {
+  animation: imagePulse 1.5s ease-in-out infinite;
+}
+
+@keyframes imagePulse {
+  0%, 100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Smooth transitions */
+.smooth-transition {
+  transition: all 0.3s ease-out;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .gallery-card {
+    transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+  }
+  
+  .smooth-transition {
+    transition: all 0.2s ease-out;
+  }
 }

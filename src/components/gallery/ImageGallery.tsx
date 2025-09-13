@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useMemo, useState, useCallback } from 'react'
-import { motion, AnimatePresence, PanInfo, useMotionValue } from 'framer-motion'
 import { ImageCard } from './ImageCard'
 import { mockAlbums } from '@/mocks/albums'
 import { ArrowLeft, ArrowRight, ArrowDown } from 'lucide-react'
@@ -13,10 +12,6 @@ const SCALE_FACTOR = 0.07
 const MAX_VISIBLE = 5
 
 type TutorialPhase = 'strict' | 'hints' | 'done'
-
-interface ImageGalleryProps {
-  onLoadComplete?: () => void
-}
 
 const NOTCH_MASK = `url("data:image/svg+xml,%3csvg width='350' height='480' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M48 0L121 0C141 0 141 24 175 24C209 24 209 0 229 0L302 0A48 48 0 01350 48L350 432A48 48 0 01302 480L48 480A48 48 0 010 432L0 48A48 48 0 0148 0Z' fill='white'/%3e%3c/svg%3e")`
 
@@ -37,7 +32,10 @@ export const ImageGallery = () => {
   })
   const [hasLoaded, setHasLoaded] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
-  const x = useMotionValue(0)
+  const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(
+    null,
+  )
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
 
   useEffect(() => {
     const checkMobile = () => {
@@ -56,12 +54,6 @@ export const ImageGallery = () => {
       if (savedCompletion) setHintCompletion(JSON.parse(savedCompletion))
     } catch {}
   }, [])
-
-  useEffect(() => {
-    if (hasLoaded) {
-      // onLoadComplete() // This line is removed as per the edit hint.
-    }
-  }, [hasLoaded]) // This line is removed as per the edit hint.
 
   const saveState = useCallback(
     (
@@ -98,102 +90,112 @@ export const ImageGallery = () => {
     [items.length],
   )
 
-  const handleDrag = useCallback(
-    (_event: unknown, info: PanInfo) => {
-      if (tutorialPhase === 'strict') {
-        const isVerticalDrag = Math.abs(info.offset.y) > Math.abs(info.offset.x)
-        const isLeftSwipe = !isVerticalDrag && info.offset.x < -20
-        const isRightSwipe = !isVerticalDrag && info.offset.x > 20
-        const isDownSwipe = isVerticalDrag && info.offset.y > 20
+  const handleDragStart = useCallback(
+    (e: React.TouchEvent | React.MouseEvent) => {
+      const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
+      const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
+      setDragStart({ x: clientX, y: clientY })
+      setDragOffset({ x: 0, y: 0 })
+    },
+    [],
+  )
 
+  const handleDragMove = useCallback(
+    (e: React.TouchEvent | React.MouseEvent) => {
+      if (!dragStart) return
+
+      const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
+      const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
+      const offsetX = clientX - dragStart.x
+      const offsetY = clientY - dragStart.y
+      setDragOffset({ x: offsetX, y: offsetY })
+
+      const isVerticalDrag = Math.abs(offsetY) > Math.abs(offsetX)
+      const isLeftSwipe = !isVerticalDrag && offsetX < -20
+      const isRightSwipe = !isVerticalDrag && offsetX > 20
+      const isDownSwipe = isVerticalDrag && offsetY > 20
+
+      if (tutorialPhase === 'strict') {
         if (strictStep === 0 && isLeftSwipe) setHintDirection('left')
         else if (strictStep === 1 && isRightSwipe) setHintDirection('right')
         else if (strictStep === 2 && isDownSwipe) setHintDirection('down')
         else setHintDirection(null)
-        return
-      }
-
-      if (tutorialPhase !== 'hints') return
-
-      if (Math.abs(info.offset.y) > Math.abs(info.offset.x)) {
-        if (info.offset.y > 20) setHintDirection('down')
-        else setHintDirection(null)
-      } else {
-        if (info.offset.x < -20) setHintDirection('left')
-        else if (info.offset.x > 20) setHintDirection('right')
+      } else if (tutorialPhase === 'hints') {
+        if (isLeftSwipe) setHintDirection('left')
+        else if (isRightSwipe) setHintDirection('right')
+        else if (isDownSwipe) setHintDirection('down')
         else setHintDirection(null)
       }
     },
-    [tutorialPhase, strictStep],
+    [dragStart, tutorialPhase, strictStep],
   )
 
-  const handleDragEnd = useCallback(
-    (_event: unknown, info: PanInfo) => {
-      setHintDirection(null)
+  const handleDragEnd = useCallback(() => {
+    if (!dragStart) return
 
-      const dx = info.offset.x
-      const dy = info.offset.y
-      const vx = info.velocity.x || 0
-      const vy = info.velocity.y || 0
+    setHintDirection(null)
+    setDragStart(null)
 
-      const horizontal = Math.abs(dx) >= Math.abs(dy)
-      const isLeftSwipe = horizontal && (dx < -40 || vx < -600)
-      const isRightSwipe = horizontal && (dx > 40 || vx > 600)
-      const isDownSwipe = !horizontal && (dy > 50 || vy > 800)
+    const threshold = 50
+    const isVerticalDrag = Math.abs(dragOffset.y) > Math.abs(dragOffset.x)
+    const isLeftSwipe = !isVerticalDrag && dragOffset.x < -threshold
+    const isRightSwipe = !isVerticalDrag && dragOffset.x > threshold
+    const isDownSwipe = isVerticalDrag && dragOffset.y > threshold
 
-      if (tutorialPhase === 'strict') {
-        if (strictStep === 0 && isLeftSwipe) {
-          nextCard()
-          setStrictStep(1)
-        } else if (strictStep === 1 && isRightSwipe) {
-          prevCard()
-          setStrictStep(2)
-        } else if (strictStep === 2 && isDownSwipe) {
-          selectAlbum(items[current])
-          setTutorialPhase('hints')
-          saveState('hints', hintCompletion)
-        }
-        return
-      }
-
-      let newCompletion = { ...hintCompletion }
-      let phase = tutorialPhase
-
-      if (isDownSwipe && !hintCompletion.down) {
-        selectAlbum(items[current])
-        newCompletion.down = true
-      } else if (isLeftSwipe && !hintCompletion.left) {
+    if (tutorialPhase === 'strict') {
+      if (strictStep === 0 && isLeftSwipe) {
         nextCard()
-        newCompletion.left = true
-      } else if (isRightSwipe && !hintCompletion.right) {
+        setStrictStep(1)
+      } else if (strictStep === 1 && isRightSwipe) {
         prevCard()
-        newCompletion.right = true
-      } else {
-        // Allow free navigation even after hints are done
-        if (isLeftSwipe) nextCard()
-        else if (isRightSwipe) prevCard()
-        else if (isDownSwipe) selectAlbum(items[current])
+        setStrictStep(2)
+      } else if (strictStep === 2 && isDownSwipe) {
+        selectAlbum(items[current])
+        setTutorialPhase('hints')
+        saveState('hints', hintCompletion)
       }
+      setDragOffset({ x: 0, y: 0 })
+      return
+    }
 
-      if (newCompletion.left && newCompletion.right && newCompletion.down)
-        phase = 'done'
+    let newCompletion = { ...hintCompletion }
+    let phase = tutorialPhase
 
-      setHintCompletion(newCompletion)
-      setTutorialPhase(phase)
-      saveState(phase, newCompletion)
-    },
-    [
-      items,
-      current,
-      hintCompletion,
-      nextCard,
-      prevCard,
-      saveState,
-      selectAlbum,
-      strictStep,
-      tutorialPhase,
-    ],
-  )
+    if (isDownSwipe && !hintCompletion.down) {
+      selectAlbum(items[current])
+      newCompletion.down = true
+    } else if (isLeftSwipe && !hintCompletion.left) {
+      nextCard()
+      newCompletion.left = true
+    } else if (isRightSwipe && !hintCompletion.right) {
+      prevCard()
+      newCompletion.right = true
+    } else {
+      if (isLeftSwipe) nextCard()
+      else if (isRightSwipe) prevCard()
+      else if (isDownSwipe) selectAlbum(items[current])
+    }
+
+    if (newCompletion.left && newCompletion.right && newCompletion.down)
+      phase = 'done'
+
+    setHintCompletion(newCompletion)
+    setTutorialPhase(phase)
+    saveState(phase, newCompletion)
+    setDragOffset({ x: 0, y: 0 })
+  }, [
+    dragStart,
+    dragOffset,
+    items,
+    current,
+    hintCompletion,
+    nextCard,
+    prevCard,
+    saveState,
+    selectAlbum,
+    strictStep,
+    tutorialPhase,
+  ])
 
   const handleCardLoaded = useCallback(() => {
     if (!hasLoaded) {
@@ -202,57 +204,46 @@ export const ImageGallery = () => {
   }, [hasLoaded])
 
   return (
-    <div className="relative w-full h-[600px] md:h-[640px] flex items-center justify-center will-change-transform [transform:translateZ(0)] overflow-hidden">
-      <motion.div
+    <div className="relative w-full h-[600px] md:h-[640px] flex items-center justify-center overflow-hidden">
+      <div
         className="pointer-events-none absolute h-full w-[min(740px,calc(100%-16px))] z-10"
         style={{
           maskImage: NOTCH_MASK as unknown as string,
           WebkitMaskImage: NOTCH_MASK as unknown as string,
           maskSize: '100% 100%',
-          x,
         }}
       >
-        <motion.div
-          className="absolute inset-y-0 left-0 w-1/2"
+        <div
+          className={`absolute inset-y-0 left-0 w-1/2 transition-opacity duration-300 ${
+            (tutorialPhase === 'strict' && strictStep === 0) ||
+            (tutorialPhase === 'hints' &&
+              !hintCompletion.left &&
+              hintDirection === 'left')
+              ? 'opacity-100'
+              : 'opacity-0'
+          }`}
           style={{
             background:
               'linear-gradient(to right, rgba(255, 0, 0, 0.5), transparent 80%)',
             filter: 'blur(24px)',
-            willChange: 'opacity',
           }}
-          initial={{ opacity: 0 }}
-          animate={{
-            opacity:
-              (tutorialPhase === 'strict' && strictStep === 0) ||
-              (tutorialPhase === 'hints' &&
-                !hintCompletion.left &&
-                hintDirection === 'left')
-                ? 1
-                : 0,
-          }}
-          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
         />
-        <motion.div
-          className="absolute inset-y-0 right-0 w-1/2"
+        <div
+          className={`absolute inset-y-0 right-0 w-1/2 transition-opacity duration-300 ${
+            (tutorialPhase === 'strict' && strictStep === 1) ||
+            (tutorialPhase === 'hints' &&
+              !hintCompletion.right &&
+              hintDirection === 'right')
+              ? 'opacity-100'
+              : 'opacity-0'
+          }`}
           style={{
             background:
               'linear-gradient(to left, rgba(0, 255, 255, 0.5), transparent 80%)',
             filter: 'blur(24px)',
-            willChange: 'opacity',
           }}
-          initial={{ opacity: 0 }}
-          animate={{
-            opacity:
-              (tutorialPhase === 'strict' && strictStep === 1) ||
-              (tutorialPhase === 'hints' &&
-                !hintCompletion.right &&
-                hintDirection === 'right')
-                ? 1
-                : 0,
-          }}
-          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
         />
-      </motion.div>
+      </div>
 
       <Hint
         position="top"
@@ -287,60 +278,40 @@ export const ImageGallery = () => {
             hintDirection === 'right')
         }
       />
-      <AnimatePresence>
+
+      <div className="relative w-full h-full">
         {windowItems.map((it, pos) => {
           const card = items[it.idx]
           const isTopCard = pos === 0
 
           return (
-            <motion.div
+            <div
               key={card.id}
-              className={`absolute w-[min(740px,calc(100%-16px))] h-full will-change-transform [transform:translateZ(0)] ${
-                isTopCard ? '' : 'pointer-events-none'
+              className={`absolute w-[min(740px,calc(100%-16px))] h-full ${
+                isTopCard
+                  ? 'cursor-grab active:cursor-grabbing'
+                  : 'pointer-events-none'
               }`}
               style={{
                 transformOrigin: 'top center',
                 zIndex: windowItems.length - pos,
-                willChange: 'transform, opacity',
-                backfaceVisibility: 'hidden',
-                WebkitBackfaceVisibility: 'hidden',
-                x: isTopCard ? x : undefined,
-              }}
-              initial={false}
-              animate={{
-                y: pos * CARD_OFFSET,
-                scale: 1 - pos * SCALE_FACTOR,
+                transform:
+                  isTopCard && (dragOffset.x !== 0 || dragOffset.y !== 0)
+                    ? `translateX(${dragOffset.x}px) translateY(${pos * CARD_OFFSET + dragOffset.y * 0.1}px) scale(${1 - pos * SCALE_FACTOR}) rotate(${pos > 0 ? (pos % 2 === 0 ? -0.6 : 0.6) : 0}deg)`
+                    : `translateY(${pos * CARD_OFFSET}px) scale(${1 - pos * SCALE_FACTOR}) rotate(${pos > 0 ? (pos % 2 === 0 ? -0.6 : 0.6) : 0}deg)`,
                 opacity: 1 - pos * 0.06,
-                rotate: pos > 0 ? (pos % 2 === 0 ? -0.6 : 0.6) : 0,
+                transition:
+                  isTopCard && dragOffset.x === 0 && dragOffset.y === 0
+                    ? 'transform 0.3s ease-out'
+                    : 'none',
               }}
-              transition={
-                isMobile
-                  ? {
-                      type: 'tween',
-                      duration: 0.3,
-                      ease: 'easeOut',
-                    }
-                  : {
-                      type: 'spring',
-                      stiffness: 250,
-                      damping: 28,
-                      mass: 1,
-                    }
-              }
-              drag={isTopCard}
-              dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
-              dragElastic={isMobile ? 0.1 : 0.14}
-              dragMomentum={false}
-              onDrag={handleDrag}
-              onDragEnd={handleDragEnd}
-              exit={{
-                x: pos === 0 ? (it.idx > current ? -300 : 300) : 0,
-                opacity: 0,
-                scale: 0.9,
-                transition: isMobile
-                  ? { type: 'tween', duration: 0.2, ease: 'easeIn' }
-                  : { type: 'spring', stiffness: 260, damping: 28 },
-              }}
+              onTouchStart={isTopCard ? handleDragStart : undefined}
+              onTouchMove={isTopCard ? handleDragMove : undefined}
+              onTouchEnd={isTopCard ? handleDragEnd : undefined}
+              onMouseDown={isTopCard ? handleDragStart : undefined}
+              onMouseMove={isTopCard ? handleDragMove : undefined}
+              onMouseUp={isTopCard ? handleDragEnd : undefined}
+              onMouseLeave={isTopCard ? handleDragEnd : undefined}
             >
               <ImageCard
                 data={card}
@@ -348,10 +319,10 @@ export const ImageGallery = () => {
                 preload
                 onLoaded={handleCardLoaded}
               />
-            </motion.div>
+            </div>
           )
         })}
-      </AnimatePresence>
+      </div>
     </div>
   )
 }
