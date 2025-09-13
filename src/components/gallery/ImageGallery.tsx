@@ -47,6 +47,20 @@ export const ImageGallery = () => {
   }, [])
 
   useEffect(() => {
+    const handleTouchMove = (e: TouchEvent) => {
+      // Prevent pull-to-refresh on mobile when dragging a card
+      if (dragStart) {
+        e.preventDefault()
+      }
+    }
+
+    window.addEventListener('touchmove', handleTouchMove, { passive: false })
+    return () => {
+      window.removeEventListener('touchmove', handleTouchMove)
+    }
+  }, [dragStart])
+
+  useEffect(() => {
     try {
       const savedPhase = localStorage.getItem('gallery_tutorial_phase')
       if (savedPhase) setTutorialPhase(JSON.parse(savedPhase))
@@ -204,124 +218,131 @@ export const ImageGallery = () => {
   }, [hasLoaded])
 
   return (
-    <div className="relative w-full h-[600px] md:h-[640px] flex items-center justify-center overflow-hidden">
+    <div className="w-full h-full flex items-center justify-center">
       <div
-        className="pointer-events-none absolute h-full w-[min(740px,calc(100%-16px))] z-10"
+        className="relative w-[min(740px,calc(100%-16px))] h-[600px] md:h-[640px] flex items-center justify-center overflow-hidden"
         style={{
-          maskImage: NOTCH_MASK as unknown as string,
-          WebkitMaskImage: NOTCH_MASK as unknown as string,
-          maskSize: '100% 100%',
+          perspective: '1000px',
         }}
       >
         <div
-          className={`absolute inset-y-0 left-0 w-1/2 transition-opacity duration-300 ${
+          className="pointer-events-none absolute h-full w-full z-10"
+          style={{
+            maskImage: NOTCH_MASK as unknown as string,
+            WebkitMaskImage: NOTCH_MASK as unknown as string,
+            maskSize: '100% 100%',
+          }}
+        >
+          <div
+            className={`absolute inset-y-0 left-0 w-1/2 transition-opacity duration-300 ${
+              (tutorialPhase === 'strict' && strictStep === 0) ||
+              (tutorialPhase === 'hints' &&
+                !hintCompletion.left &&
+                hintDirection === 'left')
+                ? 'opacity-100'
+                : 'opacity-0'
+            }`}
+            style={{
+              background:
+                'linear-gradient(to right, rgba(255, 0, 0, 0.5), transparent 80%)',
+              filter: 'blur(24px)',
+            }}
+          />
+          <div
+            className={`absolute inset-y-0 right-0 w-1/2 transition-opacity duration-300 ${
+              (tutorialPhase === 'strict' && strictStep === 1) ||
+              (tutorialPhase === 'hints' &&
+                !hintCompletion.right &&
+                hintDirection === 'right')
+                ? 'opacity-100'
+                : 'opacity-0'
+            }`}
+            style={{
+              background:
+                'linear-gradient(to left, rgba(0, 255, 255, 0.5), transparent 80%)',
+              filter: 'blur(24px)',
+            }}
+          />
+        </div>
+
+        <Hint
+          position="top"
+          text="Альбомны ачу өчен аска тартыгыз"
+          icon={ArrowDown}
+          visible={
+            (tutorialPhase === 'strict' && strictStep === 2) ||
+            (tutorialPhase === 'hints' &&
+              !hintCompletion.down &&
+              hintDirection === 'down')
+          }
+        />
+        <Hint
+          position="left"
+          text="Киләсе рәсемгә күчү өчен сулга шудырыгыз"
+          icon={ArrowLeft}
+          visible={
             (tutorialPhase === 'strict' && strictStep === 0) ||
             (tutorialPhase === 'hints' &&
               !hintCompletion.left &&
               hintDirection === 'left')
-              ? 'opacity-100'
-              : 'opacity-0'
-          }`}
-          style={{
-            background:
-              'linear-gradient(to right, rgba(255, 0, 0, 0.5), transparent 80%)',
-            filter: 'blur(24px)',
-          }}
+          }
         />
-        <div
-          className={`absolute inset-y-0 right-0 w-1/2 transition-opacity duration-300 ${
+        <Hint
+          position="right"
+          text="Алдагы рәсемгә кайту өчен уңга шудырыгыз"
+          icon={ArrowRight}
+          visible={
             (tutorialPhase === 'strict' && strictStep === 1) ||
             (tutorialPhase === 'hints' &&
               !hintCompletion.right &&
               hintDirection === 'right')
-              ? 'opacity-100'
-              : 'opacity-0'
-          }`}
-          style={{
-            background:
-              'linear-gradient(to left, rgba(0, 255, 255, 0.5), transparent 80%)',
-            filter: 'blur(24px)',
-          }}
+          }
         />
-      </div>
 
-      <Hint
-        position="top"
-        text="Альбомны ачу өчен аска тартыгыз"
-        icon={ArrowDown}
-        visible={
-          (tutorialPhase === 'strict' && strictStep === 2) ||
-          (tutorialPhase === 'hints' &&
-            !hintCompletion.down &&
-            hintDirection === 'down')
-        }
-      />
-      <Hint
-        position="left"
-        text="Киләсе рәсемгә күчү өчен сулга шудырыгыз"
-        icon={ArrowLeft}
-        visible={
-          (tutorialPhase === 'strict' && strictStep === 0) ||
-          (tutorialPhase === 'hints' &&
-            !hintCompletion.left &&
-            hintDirection === 'left')
-        }
-      />
-      <Hint
-        position="right"
-        text="Алдагы рәсемгә кайту өчен уңга шудырыгыз"
-        icon={ArrowRight}
-        visible={
-          (tutorialPhase === 'strict' && strictStep === 1) ||
-          (tutorialPhase === 'hints' &&
-            !hintCompletion.right &&
-            hintDirection === 'right')
-        }
-      />
+        <div className="relative w-full h-full">
+          {windowItems.map((it, pos) => {
+            const card = items[it.idx]
+            const isTopCard = pos === 0
 
-      <div className="relative w-full h-full">
-        {windowItems.map((it, pos) => {
-          const card = items[it.idx]
-          const isTopCard = pos === 0
-
-          return (
-            <div
-              key={card.id}
-              className={`absolute w-[min(740px,calc(100%-16px))] h-full ${
-                isTopCard
-                  ? 'cursor-grab active:cursor-grabbing'
-                  : 'pointer-events-none'
-              }`}
-              style={{
-                transformOrigin: 'top center',
-                zIndex: windowItems.length - pos,
-                transform:
-                  isTopCard && (dragOffset.x !== 0 || dragOffset.y !== 0)
-                    ? `translateX(${dragOffset.x}px) translateY(${pos * CARD_OFFSET + dragOffset.y * 0.1}px) scale(${1 - pos * SCALE_FACTOR}) rotate(${pos > 0 ? (pos % 2 === 0 ? -0.6 : 0.6) : 0}deg)`
-                    : `translateY(${pos * CARD_OFFSET}px) scale(${1 - pos * SCALE_FACTOR}) rotate(${pos > 0 ? (pos % 2 === 0 ? -0.6 : 0.6) : 0}deg)`,
-                opacity: 1 - pos * 0.06,
-                transition:
-                  isTopCard && dragOffset.x === 0 && dragOffset.y === 0
-                    ? 'transform 0.3s ease-out'
-                    : 'none',
-              }}
-              onTouchStart={isTopCard ? handleDragStart : undefined}
-              onTouchMove={isTopCard ? handleDragMove : undefined}
-              onTouchEnd={isTopCard ? handleDragEnd : undefined}
-              onMouseDown={isTopCard ? handleDragStart : undefined}
-              onMouseMove={isTopCard ? handleDragMove : undefined}
-              onMouseUp={isTopCard ? handleDragEnd : undefined}
-              onMouseLeave={isTopCard ? handleDragEnd : undefined}
-            >
-              <ImageCard
-                data={card}
-                isTop={isTopCard}
-                preload
-                onLoaded={handleCardLoaded}
-              />
-            </div>
-          )
-        })}
+            return (
+              <div
+                key={card.id}
+                className={`absolute inset-0 w-full h-full ${
+                  isTopCard
+                    ? 'cursor-grab active:cursor-grabbing'
+                    : 'pointer-events-none'
+                }`}
+                style={{
+                  transformOrigin: 'top center',
+                  zIndex: windowItems.length - pos,
+                  transform:
+                    isTopCard && (dragOffset.x !== 0 || dragOffset.y !== 0)
+                      ? `translateX(${dragOffset.x}px) translateY(${pos * CARD_OFFSET + dragOffset.y * 0.1}px) scale(${1 - pos * SCALE_FACTOR}) rotate(${pos > 0 ? (pos % 2 === 0 ? -0.6 : 0.6) : 0}deg)`
+                      : `translateY(${pos * CARD_OFFSET}px) scale(${1 - pos * SCALE_FACTOR}) rotate(${pos > 0 ? (pos % 2 === 0 ? -0.6 : 0.6) : 0}deg)`,
+                  opacity: 1 - pos * 0.06,
+                  transition:
+                    isTopCard && dragOffset.x === 0 && dragOffset.y === 0
+                      ? 'transform 0.3s ease-out'
+                      : 'none',
+                }}
+                onTouchStart={isTopCard ? handleDragStart : undefined}
+                onTouchMove={isTopCard ? handleDragMove : undefined}
+                onTouchEnd={isTopCard ? handleDragEnd : undefined}
+                onMouseDown={isTopCard ? handleDragStart : undefined}
+                onMouseMove={isTopCard ? handleDragMove : undefined}
+                onMouseUp={isTopCard ? handleDragEnd : undefined}
+                onMouseLeave={isTopCard ? handleDragEnd : undefined}
+              >
+                <ImageCard
+                  data={card}
+                  isTop={isTopCard}
+                  preload
+                  onLoaded={handleCardLoaded}
+                />
+              </div>
+            )
+          })}
+        </div>
       </div>
     </div>
   )

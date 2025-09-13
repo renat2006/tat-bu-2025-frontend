@@ -28,16 +28,12 @@ const ImageCardComponent = ({
   return (
     <div
       className="relative w-full h-full rounded-[48px] overflow-hidden shadow-2xl"
-      style={
-        isAndroid
-          ? { contain: 'layout paint size style' }
-          : {
-              contain: 'layout paint size style',
-              maskImage: NOTCH_MASK as unknown as string,
-              WebkitMaskImage: NOTCH_MASK as unknown as string,
-              maskSize: '100% 100%',
-            }
-      }
+      style={{
+        contain: 'layout paint size style',
+        maskImage: NOTCH_MASK as unknown as string,
+        WebkitMaskImage: NOTCH_MASK as unknown as string,
+        maskSize: '100% 100%',
+      }}
     >
       <div
         className={`absolute inset-0 bg-neutral-900 ${
