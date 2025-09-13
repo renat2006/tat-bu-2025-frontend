@@ -9,7 +9,7 @@ export default function Header() {
     <header className={clsx('z-10')}>
       <div className="mx-auto max-w-6xl px-2 py-3 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3">
-          <Image src="/logo.svg" alt="Logo" width={56} height={56} priority />
+          <Image src="/logo.svg" alt="Logo" width={70} height={70} priority />
         </Link>
         <div className="flex items-center">
           <button

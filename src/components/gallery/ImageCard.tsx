@@ -2,18 +2,11 @@
 
 import { memo, useState } from 'react'
 import Image from 'next/image'
-import { Bed, Share, Star } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { Album } from '@/types/gallery'
+import { ImageIcon } from 'lucide-react'
 
 interface ImageCardProps {
-  data: {
-    title: string
-    location: string
-    price: number
-    rating: number
-    beds: number
-    image: string
-  }
+  data: Album
   isTop?: boolean
   preload?: boolean
   onLoaded?: () => void
@@ -26,6 +19,7 @@ const ImageCardComponent = ({
   onLoaded,
 }: ImageCardProps) => {
   const [loaded, setLoaded] = useState(false)
+  const coverImage = data.images[0]
 
   return (
     <div
@@ -38,68 +32,53 @@ const ImageCardComponent = ({
       }}
     >
       <div
-        className={`absolute inset-0 bg-neutral-800 ${loaded ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300 animate-pulse`}
+        className={`absolute inset-0 bg-neutral-800 ${
+          loaded ? 'opacity-0' : 'opacity-100'
+        } transition-opacity duration-300 animate-pulse`}
       />
-      <Image
-        src={data.image}
-        alt={data.title}
-        fill
-        sizes="(max-width: 640px) 92vw, (max-width: 1024px) 720px, 960px"
-        priority={isTop || preload}
-        placeholder="empty"
-        className="object-cover will-change-transform [transform:translateZ(0)]"
-        draggable={false}
-        onLoad={() => {
-          setLoaded(true)
-          onLoaded?.()
-        }}
+      {coverImage && (
+        <Image
+          src={coverImage.src}
+          alt={data.title}
+          fill
+          sizes="(max-width: 640px) 92vw, (max-width: 1024px) 720px, 960px"
+          priority={isTop || preload}
+          placeholder="empty"
+          className="object-cover will-change-transform [transform:translateZ(0)]"
+          draggable={false}
+          onLoad={() => {
+            setLoaded(true)
+            onLoaded?.()
+          }}
+        />
+      )}
+      <div
+        className={`absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20 transition-opacity duration-300 ${
+          loaded ? 'opacity-100' : 'opacity-0'
+        }`}
       />
       <div
-        className={`absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20 transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
-      />
-      <div
-        className={`absolute top-0 left-0 right-0 p-8 text-white transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+        className={`absolute top-0 left-0 right-0 p-8 text-white transition-opacity duration-300 ${
+          loaded ? 'opacity-100' : 'opacity-0'
+        }`}
       >
         <div className="flex justify-between items-start">
           <div>
             <h2 className="text-4xl font-bold">{data.title}</h2>
-            <p className="text-white/80">{data.location}</p>
-          </div>
-          <div className="flex gap-2">
-            <button className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center">
-              <Share size={20} />
-            </button>
-            <button className="w-12 h-12 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center">
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z" />
-              </svg>
-            </button>
           </div>
         </div>
       </div>
       <div
-        className={`absolute bottom-0 left-0 right-0 p-8 text-white transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+        className={`absolute bottom-0 left-0 right-0 p-8 text-white transition-opacity duration-300 ${
+          loaded ? 'opacity-100' : 'opacity-0'
+        }`}
       >
-        <div className="flex gap-4 items-center bg-black/30 backdrop-blur-md rounded-full p-3">
-          <div className="bg-black/50 rounded-full px-4 py-2 text-lg font-semibold">
-            ${data.price}
-          </div>
-          <div className="flex items-center gap-1">
-            <Star size={18} className="text-yellow-400" />
-            <span>{data.rating}/5</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <Bed size={18} />
-            <span>{data.beds} bed</span>
+        <div className="flex gap-4 items-center bg-black/30 backdrop-blur-md rounded-full p-3 w-fit">
+          <div className="flex items-center gap-2">
+            <ImageIcon size={18} />
+            <span>
+              {data.images.length} photo{data.images.length > 1 && 's'}
+            </span>
           </div>
         </div>
       </div>
