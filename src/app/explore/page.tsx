@@ -121,11 +121,39 @@ export default function ExplorePage() {
   const addSentenceHistory = useExploreStore((s) => s.addSentence)
   const lastTapRef = useRef<Record<string, number>>({})
   const [ttMap, setTtMap] = useState<Record<string, string>>({})
+  const [expanded, setExpanded] = useState(false)
+  const [vh, setVh] = useState<number>(0)
+  const history = useExploreStore((s) => s.history)
+  const [activeTab, setActiveTab] = useState<'words' | 'history'>('words')
+  const dragRef = useRef<{ startY: number; moved: boolean }>({
+    startY: 0,
+    moved: false,
+  })
+
+  useEffect(() => {
+    const set = () => setVh(window.innerHeight)
+    set()
+    window.addEventListener('resize', set)
+    window.addEventListener('orientationchange', set)
+    return () => {
+      window.removeEventListener('resize', set)
+      window.removeEventListener('orientationchange', set)
+    }
+  }, [])
+
+  const collapsedH = 250
+  const panelH = expanded ? Math.max(260, Math.round(vh * 0.65)) : collapsedH
+  const videoH = vh ? Math.max(0, vh - panelH) : undefined
 
   useEffect(() => {
     document.body.classList.add('hide-chrome')
     return () => document.body.classList.remove('hide-chrome')
   }, [])
+
+  // При сворачивании возвращаем вкладку в «Слова»
+  useEffect(() => {
+    if (!expanded) setActiveTab('words')
+  }, [expanded])
 
   // Когда пользователь добавляет новые RU-слова, заранее переводим их на татарский для подписи пузырей
   useEffect(() => {
@@ -216,6 +244,25 @@ export default function ExplorePage() {
       })
       .filter(Boolean) as Tracked[]
   }, [])
+
+  // Пересчёт позиций при изменении размеров/ориентации/после загрузки размеров видео
+  useEffect(() => {
+    const remap = () => {
+      if (rsp) setBubbles(mapDetections(rsp))
+    }
+    const ro = new ResizeObserver(remap)
+    if (overlayRef.current) ro.observe(overlayRef.current)
+    window.addEventListener('orientationchange', remap)
+    window.addEventListener('resize', remap)
+    const v = camRef.current?.video as HTMLVideoElement | undefined
+    if (v) v.addEventListener('loadedmetadata', remap)
+    return () => {
+      ro.disconnect()
+      window.removeEventListener('orientationchange', remap)
+      window.removeEventListener('resize', remap)
+      if (v) v.removeEventListener('loadedmetadata', remap)
+    }
+  }, [rsp, mapDetections])
 
   const unifiedProcess = useCallback(
     async (file: File) => {
@@ -379,7 +426,9 @@ export default function ExplorePage() {
       <div
         ref={overlayRef}
         className="relative rounded-[24px] overflow-hidden ring-0 w-full"
-        style={{ height: 'calc(100svh - 170px)' }}
+        style={{
+          height: videoH ? `${videoH}px` : `calc(100svh - ${collapsedH}px)`,
+        }}
       >
         <Link
           href="/"
@@ -397,7 +446,9 @@ export default function ExplorePage() {
                 <span className="text-sm">Обработка…</span>
               </>
             ) : rsp ? (
-              <span className="text-sm">{rsp.objects_tt.length} • готово</span>
+              <span className="text-sm">
+                {rsp.objects_tt?.length || rsp.objects_ru?.length || 0} • готово
+              </span>
             ) : (
               <span className="text-sm">Готово</span>
             )}
@@ -446,9 +497,48 @@ export default function ExplorePage() {
       {/* Bottom docked info panel (full width) */}
       <div className="fixed bottom-0 left-0 right-0 z-40">
         <div className="w-full pb-[env(safe-area-inset-bottom)]">
-          <div className="relative w-full h-[170px] rounded-t-[32px] bg-[linear-gradient(180deg,rgba(26,27,32,0.68),rgba(26,27,32,0.9))] [backdrop-filter:saturate(180%)_blur(20px)] ring-1 ring-white/12 shadow-[0_-16px_36px_rgba(0,0,0,0.45)] px-5 py-3">
+          <div
+            className="relative w-full rounded-t-[32px] bg-[linear-gradient(180deg,rgba(26,27,32,0.64),rgba(26,27,32,0.88))] [backdrop-filter:saturate(180%)_blur(20px)] shadow-[0_-16px_36px_rgba(0,0,0,0.45)] px-5 py-3"
+            style={{ height: `${panelH}px` }}
+          >
+            {/* grabber */}
+            <button
+              onClick={() => setExpanded((v) => !v)}
+              className="absolute left-1/2 -translate-x-1/2 top-2 h-2 w-14 rounded-full bg-white/25 z-50"
+              aria-label="Развернуть панель"
+              onTouchStart={(e) => {
+                dragRef.current.startY = e.touches[0].clientY
+                dragRef.current.moved = false
+              }}
+              onTouchMove={(e) => {
+                const dy = e.touches[0].clientY - dragRef.current.startY
+                if (Math.abs(dy) > 10) dragRef.current.moved = true
+              }}
+              onTouchEnd={(e) => {
+                const dy = e.changedTouches[0].clientY - dragRef.current.startY
+                if (!dragRef.current.moved) return
+                if (dy < -40) setExpanded(true)
+                else if (dy > 40) setExpanded(false)
+              }}
+            />
             {/* chips row */}
-            <div className="min-w-0">
+            <div className="min-w-0 pt-4">
+              {expanded && (
+                <div className="mb-2 inline-flex rounded-full bg-white/10">
+                  <button
+                    className={`h-9 px-4 rounded-full text-sm ${activeTab === 'words' ? 'bg-white/20 text-white' : 'text-white/70'}`}
+                    onClick={() => setActiveTab('words')}
+                  >
+                    Слова
+                  </button>
+                  <button
+                    className={`h-9 px-4 rounded-full text-sm ${activeTab === 'history' ? 'bg-white/20 text-white' : 'text-white/70'}`}
+                    onClick={() => setActiveTab('history')}
+                  >
+                    История
+                  </button>
+                </div>
+              )}
               <div className="flex flex-wrap gap-2 overflow-y-auto no-scrollbar py-1 pr-16 max-h-16">
                 {selectedFromStore.length ? (
                   selectedFromStore.map((word) => (
@@ -456,7 +546,7 @@ export default function ExplorePage() {
                       key={word}
                       onDoubleClick={() => removeWord(word)}
                       onTouchEnd={() => onChipTouch(word)}
-                      className="px-3 py-1 rounded-full bg-white/14 ring-1 ring-white/15 text-white text-sm"
+                      className="px-3 py-1 rounded-full bg-white/12 text-white text-sm"
                       aria-label={`Удалить ${word}`}
                     >
                       {word}
@@ -464,33 +554,72 @@ export default function ExplorePage() {
                   ))
                 ) : (
                   <span className="text-white/60 text-sm">
-                    Тапните по облачку, чтобы выбрать (двойной тап — удалить)
+                    Тапните по облачку, чтобы выбрать
                   </span>
                 )}
               </div>
               {/* sentence block full width */}
-              <div className="mt-2 rounded-[18px] ring-1 ring-white/10 bg-white/8 px-4 py-3">
-                <p className="text-white font-semibold leading-snug">
-                  {rsp?.sentence_tt ||
-                    'Предложение на татарском появится здесь'}
-                </p>
-                <p className="text-white/85 text-xs mt-1">
-                  {renderHighlighted(rsp?.sentence_ru, rsp?.target_word_ru)}
-                </p>
-              </div>
+              {activeTab === 'words' ? (
+                <div className="mt-2 rounded-[18px] bg-white/8 px-4 py-3 pb-12">
+                  <p className="text-white font-semibold leading-snug">
+                    {rsp?.sentence_tt ||
+                      'Предложение на татарском появится здесь'}
+                  </p>
+                  <p className="text-white/85 text-xs mt-1">
+                    {renderHighlighted(rsp?.sentence_ru, rsp?.target_word_ru)}
+                  </p>
+                </div>
+              ) : (
+                <div
+                  className="mt-2 rounded-[18px] bg-white/6 px-2 py-1 overflow-y-auto"
+                  style={{ maxHeight: expanded ? panelH - 90 : 80 }}
+                >
+                  {history.length ? (
+                    <ul className="divide-y divide-white/10">
+                      {history.map((h) => (
+                        <li key={h.id} className="py-2 px-2">
+                          <div className="flex items-center justify-between gap-3">
+                            <p
+                              className="text-white font-semibold leading-snug truncate"
+                              title={h.sentence_tt}
+                            >
+                              {h.sentence_tt}
+                            </p>
+                            {(h.target_word_tt || h.target_word_ru) && (
+                              <span className="shrink-0 px-2 py-0.5 rounded-full bg-white/8 text-white/80 text-[11px]">
+                                {h.target_word_tt || h.target_word_ru}
+                              </span>
+                            )}
+                          </div>
+                          <p
+                            className="text-white/70 text-xs mt-1 truncate"
+                            title={h.sentence_ru}
+                          >
+                            {h.sentence_ru}
+                          </p>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-white/60 text-sm">История пуста</p>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* corner actions */}
             <button
               onClick={generateSentence}
               disabled={!selectedFromStore.length || loading}
-              className="absolute bottom-3 right-3 h-11 px-5 rounded-full bg-ink text-brandGreen font-bold ring-1 ring-black/20 disabled:opacity-50 flex items-center gap-2"
+              className="absolute right-3 h-11 px-5 rounded-full bg-ink text-brandGreen font-bold ring-1 ring-black/20 disabled:opacity-50 flex items-center gap-2"
+              style={{ bottom: expanded ? 16 : 12 }}
             >
               <Sparkles className="w-5 h-5" /> Составить
             </button>
             <button
-              onClick={() => speak(rsp?.sentence_ru || '')}
-              className="absolute bottom-3 left-3 h-11 w-11 rounded-full bg-white/14 ring-1 ring-white/12 flex items-center justify-center"
+              onClick={() => speak(rsp?.sentence_tt || '')}
+              className="absolute h-11 w-11 rounded-full bg-white/14 ring-1 ring-white/12 flex items-center justify-center"
+              style={{ bottom: expanded ? 16 : 12, left: 12 }}
               aria-label="Произнести"
             >
               <Volume2 className="w-4 h-4 text-white" />
