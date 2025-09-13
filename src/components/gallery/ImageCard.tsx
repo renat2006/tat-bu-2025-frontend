@@ -76,9 +76,7 @@ const ImageCardComponent = ({
         <div className="flex gap-4 items-center bg-black/30 backdrop-blur-md rounded-full p-3 w-fit">
           <div className="flex items-center gap-2">
             <ImageIcon size={18} />
-            <span>
-              {data.images.length} photo{data.images.length > 1 && 's'}
-            </span>
+            <span>{data.images.length} фото</span>
           </div>
         </div>
       </div>
