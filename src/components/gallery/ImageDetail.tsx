@@ -169,7 +169,10 @@ export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
   }, [])
 
   const generateSentence = async () => {
-    const objects = allWordsRU
+    const baseObjects = allWordsRU.length
+      ? allWordsRU
+      : allWordsTT.map((tt) => maps.ttToRu[tt] || tt)
+    const objects = baseObjects.slice(0, 16)
     if (!objects.length) return
     try {
       setGenLoading(true)
@@ -453,7 +456,12 @@ export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
             {!sentenceTT && (
               <p className="mt-2 text-white/60 text-xs">
                 Слова:{' '}
-                {(usedObjects.length ? usedObjects : allWordsRU).join(', ')}
+                {(usedObjects.length
+                  ? usedObjects
+                  : allWordsRU.length
+                    ? allWordsRU
+                    : allWordsTT.map((tt) => maps.ttToRu[tt] || tt)
+                ).join(', ')}
               </p>
             )}
             {/* убрал затемнение и плавающую кнопку */}
