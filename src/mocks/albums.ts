@@ -6,7 +6,7 @@ export const mockAlbums: Album[] = [
     title: 'Казан',
     images: [
       {
-        src: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=800&h=600&fit=crop&crop=center&q=80&auto=format',
+        src: '/_optimized/mock_images/gallery/kazan/Казань_ Россия.avif',
         words: [
           { text: 'Кирмән', position: { x: 50, y: 30 } },
           { text: 'Урам', position: { x: 70, y: 80 } },
@@ -14,102 +14,42 @@ export const mockAlbums: Album[] = [
         ],
       },
       {
-        src: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=800&h=600&fit=crop&crop=center&q=80&auto=format',
+        src: '/_optimized/mock_images/gallery/kazan/мечеть,_казань,_татарстан,_закат,_обои.avif',
         words: [
           { text: 'Һәйкәл', position: { x: 60, y: 40 } },
           { text: 'Ат', position: { x: 25, y: 65 } },
           { text: 'Мәйдан', position: { x: 50, y: 80 } },
         ],
       },
+      {
+        src: '/_optimized/mock_images/gallery/kazan/d85d3114-356f-5e97-bddb-c5535bc4593b.avif',
+        words: [
+          { text: 'Манара', position: { x: 60, y: 40 } },
+          { text: 'Сәяхәт', position: { x: 25, y: 65 } },
+        ],
+      },
+      {
+        src: '/_optimized/mock_images/gallery/kazan/scale_1200 (1).avif',
+        words: [{ text: 'Мәчет', position: { x: 50, y: 20 } }],
+      },
     ],
   },
   {
     id: 2,
-    title: 'Алабуга',
-    images: [
-      {
-        src: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=800&h=600&fit=crop&crop=center&q=80&auto=format',
-        words: [
-          { text: 'Манара', position: { x: 50, y: 50 } },
-          { text: 'Таш йорт', position: { x: 55, y: 60 } },
-          { text: 'Борынгы', position: { x: 20, y: 30 } },
-        ],
-      },
-      {
-        src: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=800&h=600&fit=crop&crop=center&q=80&auto=format',
-        words: [
-          { text: 'Чиркәү', position: { x: 50, y: 20 } },
-          { text: 'Гөмбәз', position: { x: 70, y: 10 } },
-        ],
-      },
-    ],
-  },
-  {
-    id: 3,
-    title: 'Татарстан табигате',
-    images: [
-      {
-        src: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=800&h=600&fit=crop&crop=center&q=80&auto=format',
-        words: [
-          { text: 'Тау', position: { x: 50, y: 40 } },
-          { text: 'Сәяхәт', position: { x: 40, y: 70 } },
-          { text: 'Елга', position: { x: 60, y: 65 } },
-        ],
-      },
-    ],
-  },
-  {
-    id: 4,
-    title: 'Яр Чаллы',
-    images: [
-      {
-        src: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=800&h=600&fit=crop&crop=center&q=80&auto=format',
-        words: [
-          { text: 'Проспект', position: { x: 50, y: 40 } },
-          { text: 'КАМАЗ', position: { x: 40, y: 70 } },
-          { text: 'Завод', position: { x: 60, y: 65 } },
-        ],
-      },
-    ],
-  },
-  {
-    id: 5,
-    title: 'Әлмәт',
-    images: [
-      {
-        src: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&h=600&fit=crop&crop=center&q=80&auto=format',
-        words: [
-          { text: 'Нефть', position: { x: 50, y: 30 } },
-          { text: 'Каскад', position: { x: 70, y: 80 } },
-          { text: 'Скульптура', position: { x: 30, y: 10 } },
-        ],
-      },
-    ],
-  },
-  {
-    id: 6,
-    title: 'Түбән Кама',
-    images: [
-      {
-        src: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=800&h=600&fit=crop&crop=center&q=80&auto=format',
-        words: [
-          { text: 'Химия', position: { x: 50, y: 50 } },
-          { text: 'Парк', position: { x: 55, y: 60 } },
-          { text: 'Елга', position: { x: 20, y: 30 } },
-        ],
-      },
-    ],
-  },
-  {
-    id: 7,
     title: 'Чистай',
     images: [
       {
-        src: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=800&h=600&fit=crop&crop=center&q=80&auto=format',
+        src: '/_optimized/mock_images/gallery/chist/caption.avif',
         words: [
-          { text: 'Сәгать', position: { x: 50, y: 20 } },
-          { text: 'Музей', position: { x: 70, y: 10 } },
-          { text: 'Тарих', position: { x: 40, y: 80 } },
+          { text: 'Сәгать', position: { x: 48, y: 24 } },
+          { text: 'Музей', position: { x: 72, y: 12 } },
+        ],
+      },
+      {
+        src: '/_optimized/mock_images/gallery/chist/mechet-nur-.avif',
+        words: [
+          { text: 'Мәчет', position: { x: 50, y: 22 } },
+          { text: 'Мәдәният', position: { x: 28, y: 64 } },
         ],
       },
     ],

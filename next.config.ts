@@ -4,7 +4,11 @@ import bundleAnalyzer from '@next/bundle-analyzer'
 const nextConfig: NextConfig = {
   images: {
     formats: ['image/avif', 'image/webp'],
-    remotePatterns: [{ protocol: 'https', hostname: 'images.unsplash.com' }],
+    remotePatterns: [
+      { protocol: 'https', hostname: 'images.unsplash.com' },
+      { protocol: 'https', hostname: 'source.unsplash.com' },
+    ],
+    minimumCacheTTL: 60,
   },
   headers: async () => [
     {

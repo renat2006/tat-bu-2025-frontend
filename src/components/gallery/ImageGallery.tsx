@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState, useCallback } from 'react'
+import { useEffect, useMemo, useState, useCallback, useRef } from 'react'
 import { ImageCard } from './ImageCard'
 import { mockAlbums } from '@/mocks/albums'
 import { ArrowLeft, ArrowRight, ArrowDown } from 'lucide-react'
@@ -17,7 +17,15 @@ const NOTCH_MASK = `url("data:image/svg+xml,%3csvg width='350' height='480' xmln
 
 export const ImageGallery = () => {
   const { selectAlbum } = useImageDetailStore()
-  const items = useMemo(() => mockAlbums, [])
+  const [items, setItems] = useState<any[]>(mockAlbums)
+  // избежать гидрации: читаем localStorage после маунта
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('user-albums')
+      const user = raw ? (JSON.parse(raw) as any[]) : []
+      if (Array.isArray(user) && user.length) setItems([...user, ...mockAlbums])
+    } catch {}
+  }, [])
   const [current, setCurrent] = useState(0)
   const [visibleCount, setVisibleCount] = useState(3)
   const [hintDirection, setHintDirection] = useState<
@@ -36,6 +44,7 @@ export const ImageGallery = () => {
     null,
   )
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
+  const rafRef = useRef<number | null>(null)
 
   useEffect(() => {
     const checkMobile = () => {
@@ -122,7 +131,10 @@ export const ImageGallery = () => {
       const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
       const offsetX = clientX - dragStart.x
       const offsetY = clientY - dragStart.y
-      setDragOffset({ x: offsetX, y: offsetY })
+      if (rafRef.current) cancelAnimationFrame(rafRef.current)
+      rafRef.current = requestAnimationFrame(() => {
+        setDragOffset({ x: offsetX, y: offsetY })
+      })
 
       const isVerticalDrag = Math.abs(offsetY) > Math.abs(offsetX)
       const isLeftSwipe = !isVerticalDrag && offsetX < -20
@@ -149,6 +161,10 @@ export const ImageGallery = () => {
 
     setHintDirection(null)
     setDragStart(null)
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current)
+      rafRef.current = null
+    }
 
     const threshold = 50
     const isVerticalDrag = Math.abs(dragOffset.y) > Math.abs(dragOffset.x)
@@ -300,7 +316,7 @@ export const ImageGallery = () => {
         />
 
         <div className="relative w-full h-full">
-          {windowItems.map((it, pos) => {
+          {windowItems.slice(0, MAX_VISIBLE).map((it, pos) => {
             const card = items[it.idx]
             const isTopCard = pos === 0
 
@@ -317,13 +333,14 @@ export const ImageGallery = () => {
                   zIndex: windowItems.length - pos,
                   transform:
                     isTopCard && (dragOffset.x !== 0 || dragOffset.y !== 0)
-                      ? `translateX(${dragOffset.x}px) translateY(${pos * CARD_OFFSET + dragOffset.y * 0.1}px) scale(${1 - pos * SCALE_FACTOR}) rotate(${pos > 0 ? (pos % 2 === 0 ? -0.6 : 0.6) : 0}deg)`
-                      : `translateY(${pos * CARD_OFFSET}px) scale(${1 - pos * SCALE_FACTOR}) rotate(${pos > 0 ? (pos % 2 === 0 ? -0.6 : 0.6) : 0}deg)`,
+                      ? `translate3d(${dragOffset.x}px, ${pos * CARD_OFFSET + dragOffset.y * 0.1}px, 0) scale(${1 - pos * SCALE_FACTOR}) rotate(${pos > 0 ? (pos % 2 === 0 ? -0.6 : 0.6) : 0}deg)`
+                      : `translate3d(0, ${pos * CARD_OFFSET}px, 0) scale(${1 - pos * SCALE_FACTOR}) rotate(${pos > 0 ? (pos % 2 === 0 ? -0.6 : 0.6) : 0}deg)`,
                   opacity: 1 - pos * 0.06,
                   transition:
                     isTopCard && dragOffset.x === 0 && dragOffset.y === 0
                       ? 'transform 0.3s ease-out'
                       : 'none',
+                  willChange: 'transform',
                 }}
                 onTouchStart={isTopCard ? handleDragStart : undefined}
                 onTouchMove={isTopCard ? handleDragMove : undefined}

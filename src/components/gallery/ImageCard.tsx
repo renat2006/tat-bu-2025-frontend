@@ -50,9 +50,9 @@ const ImageCardComponent = ({
           loading={isTop ? 'eager' : 'lazy'}
           decoding="async"
           placeholder="empty"
-          className="object-cover"
+          className="object-cover will-change-transform [image-rendering:auto]"
           draggable={false}
-          unoptimized={isAndroid}
+          unoptimized={false}
           onLoadingComplete={() => {
             setLoaded(true)
             onLoaded?.()

@@ -235,7 +235,19 @@ export default function ExplorePage() {
         })
         const j = (await r.json()) as { translated_text?: string }
         if (!aborted && j.translated_text) {
-          setTtMap((m) => (m[ru] ? m : { ...m, [ru]: j.translated_text! }))
+          setTtMap((m) => {
+            if (m[ru]) return m
+            const next = { ...m, [ru]: j.translated_text as string }
+            try {
+              const raw = localStorage.getItem('explore-ru-tt')
+              const map = raw ? (JSON.parse(raw) as Record<string, string>) : {}
+              localStorage.setItem(
+                'explore-ru-tt',
+                JSON.stringify({ ...map, [ru]: j.translated_text }),
+              )
+            } catch {}
+            return next
+          })
         }
       } catch {}
     }
@@ -246,6 +258,47 @@ export default function ExplorePage() {
       aborted = true
     }
   }, [selectedFromStore, ttMap])
+
+  // Переводим все слова из текущих детекций для отображения TT на пузырях
+  useEffect(() => {
+    let aborted = false
+    const fetchTT = async (ru: string) => {
+      try {
+        const r = await fetch('https://vibe-tel.ddns.net/translate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            text: ru,
+            source_language: 'ru',
+            target_language: 'tt',
+          }),
+        })
+        const j = (await r.json()) as { translated_text?: string }
+        if (!aborted && j.translated_text) {
+          setTtMap((m) => {
+            if (m[ru]) return m
+            const next = { ...m, [ru]: j.translated_text as string }
+            try {
+              const raw = localStorage.getItem('explore-ru-tt')
+              const map = raw ? (JSON.parse(raw) as Record<string, string>) : {}
+              localStorage.setItem(
+                'explore-ru-tt',
+                JSON.stringify({ ...map, [ru]: j.translated_text }),
+              )
+            } catch {}
+            return next
+          })
+        }
+      } catch {}
+    }
+    const ruList = Array.from(new Set(bubbles.map((b) => b.ru).filter(Boolean)))
+    ruList.forEach((ru) => {
+      if (!ttMap[ru]) fetchTT(ru)
+    })
+    return () => {
+      aborted = true
+    }
+  }, [bubbles, ttMap])
 
   const onChipTouch = (word: string) => {
     const now = Date.now()
@@ -575,6 +628,17 @@ export default function ExplorePage() {
               onClick={() => {
                 toggleSelect(b.id)
                 setFocusedId(b.id)
+                try {
+                  const v = camRef.current?.getScreenshot()
+                  if (v) {
+                    const allWords = Array.from(new Set(rsp?.objects_ru || []))
+                    const title = `Кадр: ${new Date().toLocaleDateString()}`
+                    // dynamic import to avoid cycle
+                    import('@/lib/words').then((m) =>
+                      m.saveFrameToAlbum(v, allWords, title),
+                    )
+                  }
+                } catch {}
               }}
             />
           </div>
