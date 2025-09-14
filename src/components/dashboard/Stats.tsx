@@ -1,25 +1,54 @@
-import { Award, BookOpen, Star } from 'lucide-react'
-import Card from '@/components/ui/Card'
+'use client'
 
-const stats = [
-  {
-    icon: <BookOpen className="h-8 w-8 text-white" />,
-    value: '124',
-    label: 'Слов изучено',
-  },
-  {
-    icon: <Award className="h-8 w-8 text-white" />,
-    value: '3',
-    label: 'Достижений',
-  },
-  {
-    icon: <Star className="h-8 w-8 text-white" />,
-    value: '4.8',
-    label: 'Средний балл',
-  },
-]
+import { useEffect, useState } from 'react'
+import { Award, BookOpen, Flame } from 'lucide-react'
+import Card from '@/components/ui/Card'
+import { computeAchievements } from '@/lib/records'
 
 export function Stats() {
+  const [learnedCount, setLearnedCount] = useState(0)
+  const [achCount, setAchCount] = useState(0)
+  const [streak, setStreak] = useState(0)
+
+  useEffect(() => {
+    const load = () => {
+      try {
+        const raw = window.localStorage.getItem('explore-selected-all')
+        const arr = raw ? (JSON.parse(raw) as unknown) : []
+        setLearnedCount(Array.isArray(arr) ? arr.length : 0)
+        const a = computeAchievements()
+        setAchCount(a.achievedCount)
+        setStreak(a.streakDays)
+      } catch {
+        setLearnedCount(0)
+        setAchCount(0)
+        setStreak(0)
+      }
+    }
+    load()
+    const onFocus = () => load()
+    window.addEventListener('focus', onFocus)
+    return () => window.removeEventListener('focus', onFocus)
+  }, [])
+
+  const stats = [
+    {
+      icon: <BookOpen className="h-8 w-8 text-white" />,
+      value: String(learnedCount),
+      label: 'Слов изучено',
+    },
+    {
+      icon: <Award className="h-8 w-8 text-white" />,
+      value: String(achCount),
+      label: 'Достижений',
+    },
+    {
+      icon: <Flame className="h-8 w-8 text-white" />,
+      value: String(streak),
+      label: 'Серия дней',
+    },
+  ]
+
   return (
     <>
       {stats.map((stat) => (

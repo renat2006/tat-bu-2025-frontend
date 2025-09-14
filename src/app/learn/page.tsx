@@ -1,70 +1,114 @@
+'use client'
+
 import Tile from '@/components/ui/Tile'
 import {
-  BookOpen,
-  Brain,
-  Languages,
-  Target,
   Play,
-  Repeat2,
-  TimerReset,
+  BookOpen,
+  Shuffle,
+  Keyboard,
+  Trophy,
+  Zap,
+  Target,
+  CalendarCheck,
+  Medal,
 } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { getRecords, isSameDay, computeAchievements } from '@/lib/records'
 
 export default function LearnPage() {
-  const categories = [
+  const [progress, setProgress] = useState(0)
+  const [streak, setStreak] = useState(0)
+  const [todayCount, setTodayCount] = useState(0)
+
+  const quick = [
     {
       title: 'Словарь',
-      icon: <Languages className="w-7 h-7" />,
-      desc: 'Новые слова и повторение',
+      icon: <BookOpen className="w-6 h-6" />,
       href: '/learn/vocab',
       variant: 'brand' as const,
     },
     {
-      title: 'Грамматика',
-      icon: <BookOpen className="w-7 h-7" />,
-      desc: 'Правила и задания',
-      href: '/learn/grammar',
+      title: 'Парные карточки',
+      icon: <Shuffle className="w-6 h-6" />,
+      href: '/learn/match',
       variant: 'glass' as const,
     },
     {
-      title: 'Практика',
-      icon: <Brain className="w-7 h-7" />,
-      desc: 'Диалоги и аудио',
-      href: '/learn/practice',
-      variant: 'brand' as const,
-    },
-    {
-      title: 'Цели',
-      icon: <Target className="w-7 h-7" />,
-      desc: 'Ежедневные челленджи',
-      href: '/learn/goals',
-      variant: 'glass' as const,
-    },
-  ]
-
-  const quick = [
-    {
-      title: 'Быстрое повторение',
-      icon: <Repeat2 className="w-6 h-6" />,
-      href: '/learn/review',
-      variant: 'glass' as const,
-    },
-    {
-      title: '10 минут фокуса',
-      icon: <TimerReset className="w-6 h-6" />,
-      href: '/learn/focus10',
+      title: 'Напиши перевод',
+      icon: <Keyboard className="w-6 h-6" />,
+      href: '/learn/spell',
       variant: 'glass' as const,
     },
     {
       title: 'Продолжить урок',
       icon: <Play className="w-6 h-6" />,
       href: '/learn/continue',
-      variant: 'brand' as const,
+      variant: 'glass' as const,
     },
   ]
-
-  const progress = 62
+  useEffect(() => {
+    try {
+      const match = getRecords<{ moves: number; seconds: number }>('match')
+      const spell = getRecords<{ score: number; seconds: number }>('spell')
+      const all = [...match, ...spell]
+      const today = all.filter((r) => isSameDay(r.ts, Date.now()))
+      const target = 3
+      const pct = Math.min(100, Math.round((today.length / target) * 100))
+      setTodayCount(today.length)
+      const uniqueDays = new Set(
+        all.map((r) => {
+          const d = new Date(r.ts)
+          return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
+        }),
+      )
+      let s = 0
+      const dayMs = 24 * 60 * 60 * 1000
+      for (let i = 0; i < 30; i++) {
+        const d = new Date(Date.now() - i * dayMs)
+        const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
+        if (uniqueDays.has(key)) s++
+        else break
+      }
+      setStreak(s)
+      setProgress(pct)
+    } catch {
+      setStreak(0)
+      setProgress(0)
+    }
+  }, [])
   const circumference = 2 * Math.PI * 28
   const dash = `${(progress / 100) * circumference} ${circumference}`
+
+  const { medals } = useMemo(() => computeAchievements(), [])
+  const [toastQueue, setToastQueue] = useState<typeof medals>([])
+  const [activeToast, setActiveToast] = useState<
+    (typeof medals)[number] | null
+  >(null)
+
+  useEffect(() => {
+    try {
+      const seenRaw = window.localStorage.getItem('achievements_seen')
+      const seen = seenRaw ? (JSON.parse(seenRaw) as string[]) : []
+      const newly = medals.filter((m) => m.achieved && !seen.includes(m.id))
+      if (newly.length) {
+        setToastQueue(newly)
+        const merged = Array.from(new Set([...seen, ...newly.map((n) => n.id)]))
+        window.localStorage.setItem('achievements_seen', JSON.stringify(merged))
+      }
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
+    if (activeToast || toastQueue.length === 0) return
+    const next = toastQueue[0]
+    setActiveToast(next)
+    const t = setTimeout(() => {
+      setActiveToast(null)
+      setToastQueue((q) => q.slice(1))
+    }, 2500)
+    return () => clearTimeout(t)
+  }, [activeToast, toastQueue])
 
   return (
     <main className="min-h-screen pb-24 pt-4 px-4">
@@ -82,7 +126,15 @@ export default function LearnPage() {
                 Учимся сегодня
               </h1>
               <p className="text-ink/70 text-sm mt-1 truncate">
-                Серия 4 дня • Прогресс {progress}%
+                Серия {streak}{' '}
+                {streak % 10 === 1 && streak % 100 !== 11
+                  ? 'день'
+                  : streak % 10 >= 2 &&
+                      streak % 10 <= 4 &&
+                      (streak % 100 < 10 || streak % 100 >= 20)
+                    ? 'дня'
+                    : 'дней'}{' '}
+                • Сегодня {todayCount}/3
               </p>
             </div>
             <div className="relative w-20 h-20 shrink-0">
@@ -139,40 +191,7 @@ export default function LearnPage() {
           </Tile>
         ))}
 
-        {categories.map((c) => (
-          <Tile
-            key={c.title}
-            size="rect"
-            variant={c.variant}
-            right={
-              <div className="w-12 h-12 rounded-2xl bg-black/10 flex items-center justify-center">
-                {c.icon}
-              </div>
-            }
-            href={c.href}
-          >
-            <div>
-              <p
-                className={
-                  c.variant === 'brand'
-                    ? 'text-lg font-extrabold text-ink'
-                    : 'text-lg font-semibold text-white'
-                }
-              >
-                {c.title}
-              </p>
-              <p
-                className={
-                  c.variant === 'brand'
-                    ? 'text-ink/70 text-sm'
-                    : 'text-white/70 text-sm'
-                }
-              >
-                {c.desc}
-              </p>
-            </div>
-          </Tile>
-        ))}
+        {/* достижения перенесены на главную */}
       </div>
     </main>
   )
