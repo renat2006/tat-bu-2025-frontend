@@ -1,7 +1,7 @@
 'use client'
 
 import Image from 'next/image'
-import { ArrowLeft, Languages } from 'lucide-react'
+import { ArrowLeft, Languages, Sparkles, Volume2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Album } from '@/types/gallery'
 import { useIsAndroid } from '@/hooks/useIsAndroid'
@@ -26,6 +26,10 @@ export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
     null,
   )
   const [dragOffset, setDragOffset] = useState(0)
+  const [genLoading, setGenLoading] = useState(false)
+  const [sentenceTT, setSentenceTT] = useState('')
+  const [sentenceRU, setSentenceRU] = useState('')
+  const [genError, setGenError] = useState<string | null>(null)
 
   useEffect(() => {
     const checkMobile = () => {
@@ -90,6 +94,65 @@ export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
     setDragOffset(0)
   }
 
+  const allWordsTT = Array.from(
+    new Set(
+      (data.images || []).flatMap((img) =>
+        (img.words || []).map((w) => w.text),
+      ),
+    ),
+  ).slice(0, 16)
+
+  const generateSentence = async () => {
+    if (!allWordsTT.length) return
+    try {
+      setGenLoading(true)
+      setGenError(null)
+      const r = await fetch(
+        'https://vibe-tel.ddns.net/generate-sentence-bilingual',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            objects: allWordsTT,
+            previous_sentences: [],
+            context: {
+              album_title: data.title,
+              images: (data.images || []).map((i) => i.src).slice(0, 8),
+            },
+          }),
+        },
+      )
+      if (!r.ok) throw new Error('API error')
+      const j = (await r.json()) as {
+        sentence_ru: string
+        sentence_tt: string
+        target_word_ru?: string
+        target_word_tt?: string
+      }
+      setSentenceTT(j.sentence_tt || '')
+      setSentenceRU(j.sentence_ru || '')
+    } catch (e) {
+      setGenError(e instanceof Error ? e.message : 'Ошибка генерации')
+    } finally {
+      setGenLoading(false)
+    }
+  }
+
+  const speak = async (text: string) => {
+    if (!text) return
+    try {
+      const r = await fetch('https://vibe-tel.ddns.net/audio', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text }),
+      })
+      if (!r.ok) throw new Error('Audio error')
+      const { audio_base64 } = (await r.json()) as { audio_base64: string }
+      const audio = new Audio(`data:audio/mp3;base64,${audio_base64}`)
+      audio.play()
+    } catch {}
+  }
+
   return (
     <div
       className={`fixed inset-0 z-[100] bg-black/50 backdrop-blur-2xl overflow-y-auto transition-opacity duration-300 ${
@@ -105,7 +168,7 @@ export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
         </button>
       </header>
 
-      <div className="relative w-full h-[60vh] md:h-[70vh]">
+      <div className="relative w-full h-[48vh] md:h-[58vh]">
         <div className="absolute inset-0 overflow-hidden">
           <div
             className="absolute h-full w-full"
@@ -145,7 +208,7 @@ export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
 
         <div className="absolute inset-0 p-4 md:p-6 flex flex-col justify-end pointer-events-none z-20">
           <div className="text-white">
-            <h1 className="text-4xl md:text-6xl font-bold leading-tight">
+            <h1 className="text-3xl md:text-5xl font-bold leading-tight">
               {data.title}
             </h1>
             <p className="text-white/80 mt-1">
@@ -187,27 +250,68 @@ export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
       )}
 
       <div className="relative z-10 p-4 md:p-6">
-        <div className="flex items-center gap-3 mb-4 text-white">
-          <Languages size={20} />
-          <h3 className="text-lg font-semibold">Бу истәлектән сүзлек</h3>
-        </div>
-        <div className="flex flex-wrap gap-3 pb-24">
-          {data.images[currentIndex].words.length > 0 ? (
-            data.images[currentIndex].words.map((word, index) => (
-              <div
-                key={index}
-                className={`px-4 py-2 rounded-full ring-1 transition-all duration-200 hover:scale-105 ${
-                  cardColors[index % cardColors.length]
-                }`}
-              >
-                <p className="text-base font-medium">{word.text}</p>
+        <div className="text-white">
+          <div className="rounded-3xl bg-white/10 ring-1 ring-white/10 p-4">
+            <div className="flex items-center justify-between gap-3 mb-2">
+              <p className="text-sm text-white/80">Җөмлә генерациясе</p>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={generateSentence}
+                  disabled={genLoading || !allWordsTT.length}
+                  className="h-10 px-4 rounded-full bg-ink text-brandGreen font-bold ring-1 ring-black/20 disabled:opacity-60 inline-flex items-center gap-2"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  Создать
+                </button>
+                <button
+                  onClick={() => speak(sentenceTT || allWordsTT.join(', '))}
+                  className="h-10 w-10 rounded-full bg-white/10 ring-1 ring-white/10 inline-flex items-center justify-center"
+                  aria-label="Озвучить"
+                >
+                  <Volume2 className="w-4 h-4" />
+                </button>
               </div>
-            ))
-          ) : (
-            <p className="text-white/60 text-sm">
-              Бу рәсемдә сүзләр табылмады.
-            </p>
-          )}
+            </div>
+            {genError && (
+              <p className="text-xs text-red-300 mb-2">{genError}</p>
+            )}
+            <div className="space-y-1">
+              <p className="text-lg md:text-xl font-bold leading-snug">
+                {sentenceTT || '—'}
+              </p>
+              <p className="text-white/80 text-sm">{sentenceRU || '—'}</p>
+            </div>
+            {!sentenceTT && (
+              <p className="mt-2 text-white/60 text-xs">
+                Слова: {allWordsTT.join(', ')}
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div className="mt-3">
+          <div className="flex items-center gap-3 mb-2 text-white">
+            <Languages size={20} />
+            <h3 className="text-lg font-semibold">Бу истәлектән сүзлек</h3>
+          </div>
+          <div className="flex flex-wrap gap-3 max-h-36 md:max-h-48 overflow-y-auto pr-2">
+            {data.images[currentIndex].words.length > 0 ? (
+              data.images[currentIndex].words.map((word, index) => (
+                <div
+                  key={index}
+                  className={`px-4 py-2 rounded-full ring-1 transition-all duration-200 hover:scale-105 ${
+                    cardColors[index % cardColors.length]
+                  }`}
+                >
+                  <p className="text-base font-medium">{word.text}</p>
+                </div>
+              ))
+            ) : (
+              <p className="text-white/60 text-sm">
+                Бу рәсемдә сүзләр табылмады.
+              </p>
+            )}
+          </div>
         </div>
       </div>
     </div>

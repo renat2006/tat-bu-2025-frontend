@@ -6,7 +6,7 @@ export const mockAlbums: Album[] = [
     title: 'Казан',
     images: [
       {
-        src: 'https://images.unsplash.com/photo-1582106242781-0b4d7451b2a8?w=1200&h=900&fit=crop&crop=center&q=80&auto=format',
+        src: '/mock_images/gallery/kazan/Казань_ Россия.jpg',
         words: [
           { text: 'Кирмән', position: { x: 50, y: 30 } },
           { text: 'Урам', position: { x: 70, y: 80 } },
@@ -14,12 +14,23 @@ export const mockAlbums: Album[] = [
         ],
       },
       {
-        src: 'https://images.unsplash.com/photo-1607958490741-3f6a51d35f5d?w=1200&h=900&fit=crop&crop=center&q=80&auto=format',
+        src: '/mock_images/gallery/kazan/мечеть,_казань,_татарстан,_закат,_обои.jpg',
         words: [
           { text: 'Һәйкәл', position: { x: 60, y: 40 } },
           { text: 'Ат', position: { x: 25, y: 65 } },
           { text: 'Мәйдан', position: { x: 50, y: 80 } },
         ],
+      },
+      {
+        src: '/mock_images/gallery/kazan/d85d3114-356f-5e97-bddb-c5535bc4593b.jpeg',
+        words: [
+          { text: 'Манара', position: { x: 60, y: 40 } },
+          { text: 'Сәяхәт', position: { x: 25, y: 65 } },
+        ],
+      },
+      {
+        src: '/mock_images/gallery/kazan/scale_1200 (1).jpeg',
+        words: [{ text: 'Мәчет', position: { x: 50, y: 20 } }],
       },
     ],
   },

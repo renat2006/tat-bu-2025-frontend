@@ -17,7 +17,15 @@ const NOTCH_MASK = `url("data:image/svg+xml,%3csvg width='350' height='480' xmln
 
 export const ImageGallery = () => {
   const { selectAlbum } = useImageDetailStore()
-  const items = useMemo(() => mockAlbums, [])
+  const [items, setItems] = useState<any[]>(mockAlbums)
+  // избежать гидрации: читаем localStorage после маунта
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('user-albums')
+      const user = raw ? (JSON.parse(raw) as any[]) : []
+      if (Array.isArray(user) && user.length) setItems([...user, ...mockAlbums])
+    } catch {}
+  }, [])
   const [current, setCurrent] = useState(0)
   const [visibleCount, setVisibleCount] = useState(3)
   const [hintDirection, setHintDirection] = useState<
