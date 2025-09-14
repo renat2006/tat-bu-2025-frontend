@@ -298,10 +298,19 @@ export default function ExplorePage() {
           | undefined
         if (!b) return null
         const box = toRectFromAny(b, vw, vh)
+        const sx = box.x * scale + (box.w * scale) / 2 + offX + CAL_X
+        const sy = box.y * scale + (box.h * scale) / 2 + offY + CAL_Y
+        const sizePx = Math.max(box.w * scale, box.h * scale)
+        const radius = Math.max(10, Math.min(36, Math.round(sizePx * 0.25)))
+        const marginX = radius + 8
+        const marginTop = radius + 40
+        const marginBottom = radius + 8
+        const clampedX = Math.min(Math.max(sx, marginX), cw - marginX)
+        const clampedY = Math.min(Math.max(sy, marginTop), ch - marginBottom)
         return {
           id: `${Date.now()}_${i}`,
-          x: Math.round(box.x * scale + (box.w * scale) / 2 + offX + CAL_X),
-          y: Math.round(box.y * scale + (box.h * scale) / 2 + offY + CAL_Y),
+          x: Math.round(clampedX),
+          y: Math.round(clampedY),
           w: Math.round(box.w * scale),
           h: Math.round(box.h * scale),
           tt: ((d as any).class_ru as string) || json.objects_ru?.[i] || '',

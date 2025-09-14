@@ -25,11 +25,24 @@ export const useExploreStore = create<ExploreState>()(
       selected: [],
       history: [],
       addWord: (word) =>
-        set((s) => ({
-          selected: s.selected.includes(word)
-            ? s.selected
-            : [...s.selected, word],
-        })),
+        set((s) => {
+          const already = s.selected.includes(word)
+          const nextSelected = already ? s.selected : [...s.selected, word]
+          if (!already && typeof window !== 'undefined') {
+            try {
+              const key = 'explore-selected-all'
+              const raw = window.localStorage.getItem(key)
+              const prev = raw ? (JSON.parse(raw) as string[]) : []
+              const setAll = new Set(prev)
+              setAll.add(word)
+              window.localStorage.setItem(
+                key,
+                JSON.stringify(Array.from(setAll)),
+              )
+            } catch {}
+          }
+          return { selected: nextSelected }
+        }),
       removeWord: (word) =>
         set((s) => ({ selected: s.selected.filter((w) => w !== word) })),
       clearSelected: () => set({ selected: [] }),

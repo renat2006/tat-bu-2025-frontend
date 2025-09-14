@@ -3,6 +3,7 @@ import { Stats } from '@/components/dashboard/Stats'
 import { RecentWords } from '@/components/dashboard/RecentWords'
 import { ARButton } from '@/components/dashboard/ARButton'
 import { RecommendedLessons } from '@/components/dashboard/RecommendedLessons'
+import AchievementsGrid from '@/components/dashboard/AchievementsGrid'
 
 export default function Home() {
   return (
@@ -14,6 +15,7 @@ export default function Home() {
         <ARButton />
         <Stats />
         <RecentWords />
+        <AchievementsGrid />
         <RecommendedLessons />
       </div>
     </main>
