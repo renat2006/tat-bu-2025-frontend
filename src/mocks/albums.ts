@@ -6,7 +6,7 @@ export const mockAlbums: Album[] = [
     title: 'Казан',
     images: [
       {
-        src: '/mock_images/gallery/kazan/Казань_ Россия.jpg',
+        src: '/_optimized/mock_images/gallery/kazan/Казань_ Россия.avif',
         words: [
           { text: 'Кирмән', position: { x: 50, y: 30 } },
           { text: 'Урам', position: { x: 70, y: 80 } },
@@ -14,7 +14,7 @@ export const mockAlbums: Album[] = [
         ],
       },
       {
-        src: '/mock_images/gallery/kazan/мечеть,_казань,_татарстан,_закат,_обои.jpg',
+        src: '/_optimized/mock_images/gallery/kazan/мечеть,_казань,_татарстан,_закат,_обои.avif',
         words: [
           { text: 'Һәйкәл', position: { x: 60, y: 40 } },
           { text: 'Ат', position: { x: 25, y: 65 } },
@@ -22,14 +22,14 @@ export const mockAlbums: Album[] = [
         ],
       },
       {
-        src: '/mock_images/gallery/kazan/d85d3114-356f-5e97-bddb-c5535bc4593b.jpeg',
+        src: '/_optimized/mock_images/gallery/kazan/d85d3114-356f-5e97-bddb-c5535bc4593b.avif',
         words: [
           { text: 'Манара', position: { x: 60, y: 40 } },
           { text: 'Сәяхәт', position: { x: 25, y: 65 } },
         ],
       },
       {
-        src: '/mock_images/gallery/kazan/scale_1200 (1).jpeg',
+        src: '/_optimized/mock_images/gallery/kazan/scale_1200 (1).avif',
         words: [{ text: 'Мәчет', position: { x: 50, y: 20 } }],
       },
     ],
