@@ -8,6 +8,7 @@
     "start": "next start",
     "optimize:images": "node scripts/optimize-images.js",
     "clean": "node scripts/clean.js",
+    "icons": "node scripts/generate-icons.js",
     "lint": "eslint . --max-warnings=0",
     "format": "prettier --write .",
     "analyze": "ANALYZE=true next build",
