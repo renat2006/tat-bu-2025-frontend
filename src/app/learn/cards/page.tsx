@@ -114,7 +114,7 @@ export default function CardsPage() {
 
           {/* card */}
           <div
-            className="relative mt-4 h-[280px] md:h-[300px] perspective-[1200px]"
+            className="relative mt-4 h-[300px] md:h-[320px] perspective-[1200px]"
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
@@ -124,14 +124,17 @@ export default function CardsPage() {
             onMouseLeave={handleTouchEnd}
           >
             <div
-              className={`absolute inset-0 rounded-[24px] bg-[linear-gradient(180deg,rgba(26,27,32,0.9),rgba(26,27,32,0.96))] ring-1 ring-white/10 [backface-visibility:hidden] grid place-items-center px-6 text-center transition-transform duration-400 ease-out`}
+              className={`absolute inset-0 rounded-[24px] bg-[linear-gradient(180deg,rgba(26,27,32,0.92),rgba(26,27,32,0.98))] ring-1 ring-white/10 [backface-visibility:hidden] grid place-items-center px-6 text-center transition-transform duration-300 ease-out`}
               style={{
-                transform: `rotateY(${showTT ? 180 : 0}deg) translateX(${dragOffsetX * 0.1}px)`,
+                transform: `rotateY(${showTT ? 180 : 0}deg) translateX(${dragOffsetX * 0.08}px) rotateZ(${dragOffsetX * 0.002}rad)`,
               }}
               onClick={() => setShowTT((v) => !v)}
             >
-              <div>
-                <p className="text-[28px] font-extrabold leading-snug break-words">
+              <div className="relative w-full">
+                <span className="absolute top-3 right-3 text-[11px] px-2 py-0.5 rounded-full bg-white/10 ring-1 ring-white/10">
+                  RU
+                </span>
+                <p className="mt-6 text-[30px] font-extrabold leading-snug break-words">
                   {card?.ru || '—'}
                 </p>
                 <p className="text-white/60 text-xs mt-2">
@@ -140,14 +143,17 @@ export default function CardsPage() {
               </div>
             </div>
             <div
-              className={`absolute inset-0 rounded-[24px] bg-[linear-gradient(180deg,rgba(10,11,14,0.9),rgba(10,11,14,0.96))] ring-1 ring-white/10 [backface-visibility:hidden] grid place-items-center px-6 text-center transition-transform duration-400 ease-out`}
+              className={`absolute inset-0 rounded-[24px] bg-[linear-gradient(180deg,rgba(10,11,14,0.92),rgba(10,11,14,0.98))] ring-1 ring-white/10 [backface-visibility:hidden] grid place-items-center px-6 text-center transition-transform duration-300 ease-out`}
               style={{
-                transform: `rotateY(${showTT ? 0 : -180}deg) translateX(${dragOffsetX * 0.1}px)`,
+                transform: `rotateY(${showTT ? 0 : -180}deg) translateX(${dragOffsetX * 0.08}px) rotateZ(${dragOffsetX * -0.002}rad)`,
               }}
               onClick={() => setShowTT((v) => !v)}
             >
-              <div>
-                <p className="text-[28px] font-extrabold leading-snug break-words">
+              <div className="relative w-full">
+                <span className="absolute top-3 right-3 text-[11px] px-2 py-0.5 rounded-full bg-white/10 ring-1 ring-white/10">
+                  TT
+                </span>
+                <p className="mt-6 text-[30px] font-extrabold leading-snug break-words">
                   {card?.tt || '—'}
                 </p>
                 <p className="text-white/60 text-xs mt-2">
@@ -156,35 +162,20 @@ export default function CardsPage() {
               </div>
             </div>
 
-            {/* nav arrows */}
-            <div className="absolute inset-y-0 left-0 flex items-center">
+            {/* навигация вынесена вниз, чтобы не перекрывать карточку */}
+          </div>
+
+          {/* controls */}
+          <div className="mt-4 grid grid-cols-3 items-center gap-2">
+            <div className="justify-self-start">
               <button
                 onClick={prev}
-                className="ml-1 h-10 w-10 rounded-full bg-white/10 ring-1 ring-white/10 grid place-items-center"
+                className="h-10 w-10 rounded-full bg-white/10 ring-1 ring-white/10 grid place-items-center"
               >
                 <ChevronLeft className="w-5 h-5" />
               </button>
             </div>
-            <div className="absolute inset-y-0 right-0 flex items-center">
-              <button
-                onClick={next}
-                className="mr-1 h-10 w-10 rounded-full bg-white/10 ring-1 ring-white/10 grid place-items-center"
-              >
-                <ChevronRight className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-
-          {/* controls */}
-          <div className="mt-4 flex items-center justify-between gap-2">
-            <button
-              onClick={shuffleAll}
-              className="h-10 px-3 rounded-full bg-white/10 ring-1 ring-white/10 text-sm inline-flex items-center gap-2"
-            >
-              <Shuffle className="w-4 h-4" />
-              Перемешать
-            </button>
-            <div className="flex items-center gap-2">
+            <div className="justify-self-center inline-flex items-center gap-2">
               <button
                 onClick={() => speak((showTT ? card?.tt : card?.ru) || '')}
                 className="h-10 w-10 rounded-full bg-white/10 ring-1 ring-white/10 flex items-center justify-center disabled:opacity-60"
@@ -195,9 +186,23 @@ export default function CardsPage() {
               </button>
               <button
                 onClick={() => setShowTT((v) => !v)}
-                className="h-10 px-4 rounded-full bg-ink text-brandGreen font-bold ring-1 ring-black/20"
+                className="h-10 px-5 rounded-full bg-ink text-brandGreen font-bold ring-1 ring-black/20"
               >
                 {showTT ? 'RU' : 'TT'}
+              </button>
+              <button
+                onClick={shuffleAll}
+                className="h-10 w-10 rounded-full bg-white/10 ring-1 ring-white/10 grid place-items-center"
+              >
+                <Shuffle className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="justify-self-end">
+              <button
+                onClick={next}
+                className="h-10 w-10 rounded-full bg-white/10 ring-1 ring-white/10 grid place-items-center"
+              >
+                <ChevronRight className="w-5 h-5" />
               </button>
             </div>
           </div>
