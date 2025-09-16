@@ -45,6 +45,12 @@ export default function LearnPage() {
       href: '/learn/continue',
       variant: 'glass' as const,
     },
+    {
+      title: 'Карточки',
+      icon: <Zap className="w-6 h-6" />,
+      href: '/learn/cards',
+      variant: 'glass' as const,
+    },
   ]
   useEffect(() => {
     try {
