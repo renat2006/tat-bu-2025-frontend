@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import { Smartphone } from 'lucide-react'
 import './globals.css'
@@ -20,7 +20,6 @@ export const metadata: Metadata = {
   description: 'Учите татарский в кайф: AR‑сканер, "Пары" и "Напиши перевод".',
   applicationName: 'VibeTel',
   manifest: '/manifest.webmanifest',
-  themeColor: '#0B1220',
   icons: {
     icon: [
       { url: '/icons/favicon-16.png', sizes: '16x16', type: 'image/png' },
@@ -50,6 +49,10 @@ export const metadata: Metadata = {
     statusBarStyle: 'black-translucent',
   },
   formatDetection: { telephone: false },
+}
+
+export const viewport: Viewport = {
+  themeColor: '#0B1220',
 }
 
 export default function RootLayout({
