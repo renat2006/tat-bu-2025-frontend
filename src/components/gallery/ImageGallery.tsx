@@ -13,7 +13,7 @@ const MAX_VISIBLE = 5
 
 type TutorialPhase = 'strict' | 'hints' | 'done'
 
-const NOTCH_MASK = `url("data:image/svg+xml,%3csvg width='350' height='480' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M48 0L121 0C141 0 141 24 175 24C209 24 209 0 229 0L302 0A48 48 0 01350 48L350 432A48 48 0 01302 480L48 480A48 48 0 010 432L0 48A48 48 0 0148 0Z' fill='white'/%3e%3c/svg%3e")`
+const NOTCH_MASK = `url("data:image/svg+xml,%3csvg width='350' height='480' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M36 0L116 0C136 0 146 18 175 18C204 18 214 0 234 0L314 0A36 36 0 01350 36L350 444A36 36 0 01314 480L36 480A36 36 0 010 444L0 36A36 36 0 0136 0Z' fill='white'/%3e%3c/svg%3e")`
 
 export const ImageGallery = () => {
   const { selectAlbum } = useImageDetailStore()
@@ -236,9 +236,10 @@ export const ImageGallery = () => {
   return (
     <div className="w-full h-full flex items-center justify-center">
       <div
-        className="relative w-[min(740px,calc(100%-16px))] h-[600px] md:h-[640px] flex items-center justify-center overflow-hidden"
+        className="relative w-[min(740px,calc(100%-16px))] flex items-center justify-center overflow-hidden"
         style={{
           perspective: '1000px',
+          height: 'clamp(400px, calc(100svh - 160px), 640px)',
         }}
       >
         <div
@@ -260,8 +261,8 @@ export const ImageGallery = () => {
             }`}
             style={{
               background:
-                'linear-gradient(to right, rgba(255, 0, 0, 0.5), transparent 80%)',
-              filter: 'blur(24px)',
+                'linear-gradient(to right, rgba(188,251,108,0.14), transparent 75%)',
+              backdropFilter: 'blur(2px)',
             }}
           />
           <div
@@ -275,15 +276,15 @@ export const ImageGallery = () => {
             }`}
             style={{
               background:
-                'linear-gradient(to left, rgba(0, 255, 255, 0.5), transparent 80%)',
-              filter: 'blur(24px)',
+                'linear-gradient(to left, rgba(188,251,108,0.14), transparent 75%)',
+              backdropFilter: 'blur(2px)',
             }}
           />
         </div>
 
         <Hint
           position="top"
-          text="Альбомны ачу өчен аска тартыгыз"
+          text="Потяните вниз"
           icon={ArrowDown}
           visible={
             (tutorialPhase === 'strict' && strictStep === 2) ||
@@ -294,7 +295,7 @@ export const ImageGallery = () => {
         />
         <Hint
           position="left"
-          text="Киләсе рәсемгә күчү өчен сулга шудырыгыз"
+          text="Свайп влево"
           icon={ArrowLeft}
           visible={
             (tutorialPhase === 'strict' && strictStep === 0) ||
@@ -305,7 +306,7 @@ export const ImageGallery = () => {
         />
         <Hint
           position="right"
-          text="Алдагы рәсемгә кайту өчен уңга шудырыгыз"
+          text="Свайп вправо"
           icon={ArrowRight}
           visible={
             (tutorialPhase === 'strict' && strictStep === 1) ||

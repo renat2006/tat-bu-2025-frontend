@@ -44,14 +44,14 @@ export const Hint = ({ position, text, icon: Icon, visible }: HintProps) => {
 
   return (
     <div
-      className={`absolute z-50 px-5 py-3 rounded-2xl bg-white/10 ring-1 ring-white/15 text-white text-sm md:text-base backdrop-blur-xl shadow-xl flex items-center gap-3 pointer-events-none transition-all duration-300 ease-out ${getPositionClasses()} ${getAnimationClasses()}`}
+      className={`absolute z-50 px-4 py-2 rounded-xl bg-[rgba(17,18,23,0.75)] ring-1 ring-white/10 text-white text-xs md:text-sm backdrop-blur-md shadow-[0_8px_24px_rgba(0,0,0,0.45)] flex items-center gap-2 pointer-events-none transition-all duration-300 ease-out ${getPositionClasses()} ${getAnimationClasses()}`}
     >
       {Icon && (
-        <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-white/20 flex-shrink-0">
-          <Icon className="h-4 w-4" />
+        <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-white/10 flex-shrink-0">
+          <Icon className="h-3.5 w-3.5" />
         </span>
       )}
-      {text}
+      <span className="max-w-[70vw] md:max-w-none leading-snug">{text}</span>
     </div>
   )
 }

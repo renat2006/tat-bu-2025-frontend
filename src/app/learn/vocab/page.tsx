@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import BackToLearn from '@/components/ui/BackToLearn'
 import { markAchievement } from '@/lib/records'
-import { BookOpen } from 'lucide-react'
+import { BookOpen, Sparkles, Shuffle, X, Loader2, Check } from 'lucide-react'
 import Tile from '@/components/ui/Tile'
 import { Volume2, Copy, Star, StarOff } from 'lucide-react'
 
@@ -14,6 +14,12 @@ export default function VocabPage() {
   const [onlyFavs, setOnlyFavs] = useState(false)
   const [favs, setFavs] = useState<Set<string>>(new Set())
   const [toast, setToast] = useState(false)
+  const [selected, setSelected] = useState<string[]>([])
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [isSpeaking, setIsSpeaking] = useState(false)
+  const [sentenceTT, setSentenceTT] = useState('')
+  const [sentenceRU, setSentenceRU] = useState('')
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     try {
@@ -107,16 +113,62 @@ export default function VocabPage() {
 
   const speak = async (text: string) => {
     try {
+      if (!text || isSpeaking) return
+      setIsSpeaking(true)
       const r = await fetch('https://vibe-tel.ddns.net/audio', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text }),
       })
-      if (!r.ok) return
+      if (!r.ok) {
+        setIsSpeaking(false)
+        return
+      }
       const { audio_base64 } = (await r.json()) as { audio_base64: string }
       const audio = new Audio(`data:audio/mp3;base64,${audio_base64}`)
-      audio.play()
+      audio.addEventListener('ended', () => setIsSpeaking(false))
+      audio.addEventListener('error', () => setIsSpeaking(false))
+      await audio.play()
     } catch {}
+  }
+
+  const toggleSelected = (ru: string) => {
+    setSelected((prev) =>
+      prev.includes(ru) ? prev.filter((w) => w !== ru) : [...prev, ru],
+    )
+  }
+
+  const shuffleSelected = () => {
+    setSelected((prev) => [...prev].sort(() => Math.random() - 0.5))
+  }
+
+  const clearSelected = () => {
+    setSelected([])
+  }
+
+  const generate = async () => {
+    if (!selected.length || isGenerating) return
+    try {
+      setIsGenerating(true)
+      const r = await fetch(
+        'https://vibe-tel.ddns.net/generate-sentence-bilingual',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ objects: selected, previous_sentences: [] }),
+        },
+      )
+      if (!r.ok) throw new Error('API error')
+      const j = (await r.json()) as {
+        sentence_ru: string
+        sentence_tt: string
+      }
+      setSentenceTT(j.sentence_tt || '')
+      setSentenceRU(j.sentence_ru || '')
+    } catch {
+    } finally {
+      setIsGenerating(false)
+    }
   }
 
   const words = useMemo(() => {
@@ -152,6 +204,95 @@ export default function VocabPage() {
           </div>
         </div>
       </div>
+      {/* Composer */}
+      <div className="rounded-2xl bg-white/5 ring-1 ring-white/10 p-3 mb-3">
+        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2 md:gap-3">
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-wrap gap-2 max-h-16 overflow-y-auto no-scrollbar pr-2 min-h-[40px]">
+              {selected.length ? (
+                selected.map((ru) => (
+                  <button
+                    key={ru}
+                    onClick={() => toggleSelected(ru)}
+                    className="px-3 py-1 rounded-full bg-white/12 text-white text-sm inline-flex items-center gap-2"
+                    title="Убрать"
+                  >
+                    <span className="truncate max-w-[40vw]">
+                      {ruToTt[ru] || ru}
+                    </span>
+                    <X className="w-3.5 h-3.5 text-white/70" />
+                  </button>
+                ))
+              ) : (
+                <span className="text-white/60 text-sm">
+                  Выберите слова ниже
+                </span>
+              )}
+            </div>
+          </div>
+          <div className="shrink-0 flex items-center justify-end">
+            <button
+              onClick={generate}
+              disabled={!selected.length || isGenerating}
+              className="h-10 px-4 rounded-full bg-ink text-brandGreen font-bold ring-1 ring-black/20 disabled:opacity-50 inline-flex items-center gap-2"
+            >
+              {isGenerating ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Генерируем…
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4" />
+                  Составить
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {(sentenceTT || sentenceRU) && (
+          <div className="mt-3 rounded-xl bg-white/5 ring-1 ring-white/10 p-3">
+            <p className="text-white font-semibold leading-snug">
+              {sentenceTT}
+            </p>
+            <p className="text-white/80 text-xs mt-1">{sentenceRU}</p>
+            <div className="mt-2 flex items-center gap-2">
+              <button
+                onClick={() => speak(sentenceTT)}
+                disabled={!sentenceTT || isSpeaking}
+                className="h-9 w-9 rounded-full bg-white/10 ring-1 ring-white/10 flex items-center justify-center disabled:opacity-50"
+                aria-label="Произнести"
+              >
+                {isSpeaking ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Volume2 className="w-4 h-4" />
+                )}
+              </button>
+              <button
+                onClick={() => {
+                  navigator.clipboard?.writeText(
+                    `${sentenceTT} — ${sentenceRU}`,
+                  )
+                  setCopied(true)
+                  setTimeout(() => setCopied(false), 1200)
+                }}
+                className={`h-9 px-3 rounded-full text-white text-xs ring-1 ring-white/12 transition-colors ${copied ? 'bg-green-500/20' : 'bg-white/10 hover:bg-white/15'}`}
+              >
+                <span className="inline-flex items-center gap-1">
+                  {copied ? (
+                    <Check className="w-4 h-4" />
+                  ) : (
+                    <Copy className="w-4 h-4" />
+                  )}
+                  {copied ? 'Скопировано' : 'Копировать'}
+                </span>
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
       <div className="mb-3">
         <input
           value={filter}
@@ -170,9 +311,12 @@ export default function VocabPage() {
                 key={ru + i}
                 size="rect"
                 variant={'glass'}
-                className="h-[96px]"
+                className={`h-[96px] ${selected.includes(ru) ? 'ring-2 ring-brand-green/40' : ''}`}
               >
-                <div className="flex items-center gap-3">
+                <div
+                  className="flex items-center gap-3"
+                  onClick={() => toggleSelected(ru)}
+                >
                   <div className="flex-1 min-w-0">
                     <p className="text-white font-extrabold text-base truncate">
                       {tt}

@@ -28,5 +28,31 @@ export default function ClientLayout({
     }
   }, [pathname])
 
+  useEffect(() => {
+    const onUpdate = () => {
+      try {
+        const el = document.getElementById('notif-badge')
+        if (el) el.classList.remove('hidden')
+      } catch {}
+      // показать PWA-toast, если есть
+      try {
+        window.dispatchEvent(new CustomEvent('pwa-show-update-toast'))
+      } catch {}
+    }
+    const onOpen = () => {
+      try {
+        const el = document.getElementById('notif-badge')
+        if (el) el.classList.add('hidden')
+      } catch {}
+      // TODO: открыть ваш popup уведомлений
+    }
+    window.addEventListener('pwa-update-available' as any, onUpdate)
+    window.addEventListener('pwa-open-notifications' as any, onOpen)
+    return () => {
+      window.removeEventListener('pwa-update-available' as any, onUpdate)
+      window.removeEventListener('pwa-open-notifications' as any, onOpen)
+    }
+  }, [])
+
   return <>{children}</>
 }

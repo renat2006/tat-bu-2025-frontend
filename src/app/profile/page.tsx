@@ -23,13 +23,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div
-      className="bg-white/5 rounded-xl p-8 text-white"
-      style={{
-        paddingTop: 'calc(24px + env(safe-area-inset-top, 0px))',
-        paddingBottom: 'calc(24px + env(safe-area-inset-bottom, 0px))',
-      }}
-    >
+    <div className="text-white">
       <div className="flex items-center gap-6 mb-8">
         <div className="relative w-24 h-24">
           <Image
@@ -49,12 +43,12 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit}>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <form onSubmit={handleSubmit} className="max-w-3xl">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
           <div>
             <label
               htmlFor="name"
-              className="block text-sm font-medium text-white/80 mb-2"
+              className="block text-xs md:text-sm font-medium text-white/80 mb-2"
             >
               Исем
             </label>
@@ -69,7 +63,7 @@ export default function ProfilePage() {
           <div>
             <label
               htmlFor="surname"
-              className="block text-sm font-medium text-white/80 mb-2"
+              className="block text-xs md:text-sm font-medium text-white/80 mb-2"
             >
               Фамилия
             </label>
@@ -84,7 +78,7 @@ export default function ProfilePage() {
           <div className="md:col-span-2">
             <label
               htmlFor="email"
-              className="block text-sm font-medium text-white/80 mb-2"
+              className="block text-xs md:text-sm font-medium text-white/80 mb-2"
             >
               Электрон почта
             </label>
@@ -98,10 +92,10 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        <div className="mt-8 flex justify-end">
+        <div className="mt-6 md:mt-8 flex justify-end">
           <button
             type="submit"
-            className="px-6 py-3 bg-brand-green text-black font-semibold rounded-lg hover:bg-brand-green/80 transition-colors duration-200"
+            className="h-11 px-5 rounded-full bg-ink text-brandGreen font-bold ring-1 ring-black/20 hover:opacity-90 transition-all"
           >
             Саклау
           </button>
