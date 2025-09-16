@@ -9,6 +9,7 @@ import {
   MoreHorizontal,
   ChevronUp,
   Plus,
+  Loader2,
 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Tooltip } from 'react-tooltip'
@@ -52,6 +53,7 @@ export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
   } | null>(null)
   const [isAddingToVocab, setIsAddingToVocab] = useState(false)
   const [addedToVocab, setAddedToVocab] = useState(false)
+  const [isSpeaking, setIsSpeaking] = useState(false)
 
   useEffect(() => {
     const checkMobile = () => {
@@ -210,8 +212,9 @@ export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
   }, [sentenceRU, sentenceTT, expanded])
 
   const speak = async (text: string) => {
-    if (!text) return
+    if (!text || isSpeaking) return
     try {
+      setIsSpeaking(true)
       const r = await fetch('https://vibe-tel.ddns.net/audio', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -220,8 +223,12 @@ export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
       if (!r.ok) throw new Error('Audio error')
       const { audio_base64 } = (await r.json()) as { audio_base64: string }
       const audio = new Audio(`data:audio/mp3;base64,${audio_base64}`)
-      audio.play()
-    } catch {}
+      audio.addEventListener('ended', () => setIsSpeaking(false))
+      audio.addEventListener('error', () => setIsSpeaking(false))
+      await audio.play()
+    } catch {
+      setIsSpeaking(false)
+    }
   }
 
   const handleWordClick = async (
@@ -422,15 +429,29 @@ export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
                   disabled={genLoading || !allWordsTT.length}
                   className="h-10 px-4 rounded-full bg-ink text-brandGreen font-bold ring-1 ring-black/20 disabled:opacity-60 inline-flex items-center gap-2"
                 >
-                  <Sparkles className="w-4 h-4" />
-                  Создать
+                  {genLoading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Создаём…
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4" />
+                      Создать
+                    </>
+                  )}
                 </button>
                 <button
                   onClick={() => speak(sentenceTT || allWordsTT.join(', '))}
-                  className="h-10 w-10 rounded-full bg-white/10 ring-1 ring-white/10 inline-flex items-center justify-center"
+                  className="h-10 w-10 rounded-full bg-white/10 ring-1 ring-white/10 inline-flex items-center justify-center disabled:opacity-60"
                   aria-label="Озвучить"
+                  disabled={isSpeaking}
                 >
-                  <Volume2 className="w-4 h-4" />
+                  {isSpeaking ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Volume2 className="w-4 h-4" />
+                  )}
                 </button>
                 {/* убрал иконку сворачивания в хедере */}
               </div>

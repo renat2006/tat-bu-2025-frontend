@@ -189,6 +189,8 @@ export default function ExplorePage() {
   const [activeTab, setActiveTab] = useState<'words' | 'history'>('words')
   const [cameraError, setCameraError] = useState<string | null>(null)
   const [sheetDragging, setSheetDragging] = useState(false)
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [isSpeaking, setIsSpeaking] = useState(false)
   const dragRef = useRef<{ startY: number; moved: boolean }>({
     startY: 0,
     moved: false,
@@ -312,19 +314,28 @@ export default function ExplorePage() {
   const camRef = useRef<Webcam>(null)
   const overlayRef = useRef<HTMLDivElement>(null)
 
-  const speak = useCallback(async (text: string) => {
-    try {
-      const r = await fetch('https://vibe-tel.ddns.net/audio', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text }),
-      })
-      if (!r.ok) throw new Error('Audio error')
-      const { audio_base64 } = (await r.json()) as { audio_base64: string }
-      const audio = new Audio(`data:audio/mp3;base64,${audio_base64}`)
-      audio.play()
-    } catch {}
-  }, [])
+  const speak = useCallback(
+    async (text: string) => {
+      try {
+        if (!text || isSpeaking) return
+        setIsSpeaking(true)
+        const r = await fetch('https://vibe-tel.ddns.net/audio', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text }),
+        })
+        if (!r.ok) throw new Error('Audio error')
+        const { audio_base64 } = (await r.json()) as { audio_base64: string }
+        const audio = new Audio(`data:audio/mp3;base64,${audio_base64}`)
+        audio.addEventListener('ended', () => setIsSpeaking(false))
+        audio.addEventListener('error', () => setIsSpeaking(false))
+        await audio.play()
+      } catch {
+        setIsSpeaking(false)
+      }
+    },
+    [isSpeaking],
+  )
 
   const mapDetections = useCallback((json: ProcessImageResponse) => {
     const video = camRef.current?.video as HTMLVideoElement | undefined
@@ -360,8 +371,13 @@ export default function ExplorePage() {
         const marginBottom = radius + 8
         const clampedX = Math.min(Math.max(sx, marginX), cw - marginX)
         const clampedY = Math.min(Math.max(sy, marginTop), ch - marginBottom)
+        // Стабильный ключ на основе позиции и класса, без Date.now()
+        const keyX = Math.round(clampedX)
+        const keyY = Math.round(clampedY)
+        const keyLabel =
+          ((d as any).class_ru as string) || json.objects_ru?.[i] || 'obj'
         return {
-          id: `${Date.now()}_${i}`,
+          id: `${keyLabel}_${keyX}_${keyY}`,
           x: Math.round(clampedX),
           y: Math.round(clampedY),
           w: Math.round(box.w * scale),
@@ -454,7 +470,7 @@ export default function ExplorePage() {
   useEffect(() => {
     const id = setInterval(() => {
       if (!loading) captureLive()
-    }, 3000)
+    }, 2500)
     return () => clearInterval(id)
   }, [loading, captureLive])
 
@@ -476,6 +492,7 @@ export default function ExplorePage() {
     if (!selectedWords.length) return
     try {
       setLoading(true)
+      setIsGenerating(true)
       // 1-запрос: билингвальная генерация (RU + TT)
       const r = await fetch(
         'https://vibe-tel.ddns.net/generate-sentence-bilingual',
@@ -516,6 +533,7 @@ export default function ExplorePage() {
       // ignore
     } finally {
       setLoading(false)
+      setIsGenerating(false)
     }
   }, [selectedWords, addSentenceHistory])
 
@@ -545,8 +563,8 @@ export default function ExplorePage() {
     }
   }
 
-  const collapsedH = 170 // высота нижней панели
-  const panelH = expanded ? Math.max(260, Math.round(vh * 0.65)) : collapsedH
+  const collapsedH = 200 // высота нижней панели
+  const panelH = expanded ? Math.max(300, Math.round(vh * 0.68)) : collapsedH
   const videoHeightPx = vh
     ? `${Math.max(0, vh - panelH)}px`
     : `calc(100svh - ${collapsedH}px)`
@@ -655,7 +673,7 @@ export default function ExplorePage() {
             {/* grabber */}
             <button
               onClick={() => setExpanded((v) => !v)}
-              className="absolute left-1/2 -translate-x-1/2 top-2 h-2 w-14 rounded-full bg-white/25 z-50"
+              className="absolute left-1/2 -translate-x-1/2 top-2 h-2 w-16 rounded-full bg-white/30 z-50"
               aria-label="Развернуть панель"
               onTouchStart={(e) => {
                 dragRef.current.startY = e.touches[0].clientY
@@ -670,8 +688,8 @@ export default function ExplorePage() {
               onTouchEnd={(e) => {
                 const dy = e.changedTouches[0].clientY - dragRef.current.startY
                 if (!dragRef.current.moved) return
-                if (dy < -40) setExpanded(true)
-                else if (dy > 40) setExpanded(false)
+                if (dy < -30) setExpanded(true)
+                else if (dy > 30) setExpanded(false)
                 setSheetDragging(false)
               }}
             />
@@ -764,19 +782,33 @@ export default function ExplorePage() {
             {/* corner actions */}
             <button
               onClick={generateSentence}
-              disabled={!selectedFromStore.length || loading}
+              disabled={!selectedFromStore.length || loading || isGenerating}
               className="absolute right-3 h-11 px-5 rounded-full bg-ink text-brandGreen font-bold ring-1 ring-black/20 disabled:opacity-50 flex items-center gap-2"
               style={{ bottom: expanded ? 16 : 12 }}
             >
-              <Sparkles className="w-5 h-5" /> Составить
+              {isGenerating ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Генерируем…
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-5 h-5" /> Составить
+                </>
+              )}
             </button>
             <button
               onClick={() => speak(rsp?.sentence_tt || '')}
-              className="absolute h-11 w-11 rounded-full bg-white/14 ring-1 ring-white/12 flex items-center justify-center"
+              className="absolute h-11 w-11 rounded-full bg-white/14 ring-1 ring-white/12 flex items-center justify-center disabled:opacity-60"
               style={{ bottom: expanded ? 16 : 12, left: 12 }}
               aria-label="Произнести"
+              disabled={isSpeaking}
             >
-              <Volume2 className="w-4 h-4 text-white" />
+              {isSpeaking ? (
+                <Loader2 className="w-4 h-4 text-white animate-spin" />
+              ) : (
+                <Volume2 className="w-4 h-4 text-white" />
+              )}
             </button>
           </div>
         </div>

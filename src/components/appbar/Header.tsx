@@ -26,8 +26,17 @@ export default function Header() {
           <button
             aria-label="Notifications"
             className="relative inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/10 hover:bg-white/10 ring-1 ring-white/10 transition-colors"
+            onClick={() => {
+              try {
+                window.dispatchEvent(new CustomEvent('pwa-open-notifications'))
+              } catch {}
+            }}
           >
             <Bell className="h-6 w-6 text-white/80" />
+            <span
+              className="absolute -top-1 -right-1 h-4 min-w-4 px-1 rounded-full bg-brand-green text-ink text-[10px] font-bold hidden"
+              id="notif-badge"
+            ></span>
           </button>
           <Link
             href="/profile"
