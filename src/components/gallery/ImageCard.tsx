@@ -13,7 +13,7 @@ interface ImageCardProps {
   onLoaded?: () => void
 }
 
-const NOTCH_MASK = `url("data:image/svg+xml,%3csvg width='350' height='480' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M48 0L121 0C141 0 141 24 175 24C209 24 209 0 229 0L302 0A48 48 0 01350 48L350 432A48 48 0 01302 480L48 480A48 48 0 010 432L0 48A48 48 0 0148 0Z' fill='white'/%3e%3c/svg%3e")`
+const NOTCH_MASK = `url("data:image/svg+xml,%3csvg width='350' height='480' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M36 0L116 0C136 0 146 18 175 18C204 18 214 0 234 0L314 0A36 36 0 01350 36L350 444A36 36 0 01314 480L36 480A36 36 0 010 444L0 36A36 36 0 0136 0Z' fill='white'/%3e%3c/svg%3e")`
 
 const ImageCardComponent = ({
   data,
@@ -27,7 +27,7 @@ const ImageCardComponent = ({
 
   return (
     <div
-      className="relative w-full h-full rounded-[48px] overflow-hidden shadow-2xl"
+      className="relative w-full h-full rounded-[40px] overflow-hidden shadow-[0_24px_64px_rgba(0,0,0,0.45)]"
       style={{
         contain: 'layout paint size style',
         maskImage: NOTCH_MASK as unknown as string,
@@ -66,7 +66,7 @@ const ImageCardComponent = ({
         />
       )}
       <div
-        className={`absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20 transition-opacity duration-300 ${
+        className={`absolute inset-0 bg-[linear-gradient(180deg,rgba(10,11,14,0.6),rgba(10,11,14,0.0)_40%,rgba(10,11,14,0.2)_100%)] transition-opacity duration-300 ${
           loaded ? 'opacity-100' : 'opacity-0'
         }`}
       />
@@ -82,7 +82,7 @@ const ImageCardComponent = ({
         </div>
       </div>
       <div
-        className={`absolute bottom-0 left-0 right-0 p-8 text-white transition-opacity duration-300 ${
+        className={`absolute bottom-0 left-0 right-0 p-6 text-white transition-opacity duration-300 ${
           loaded ? 'opacity-100' : 'opacity-0'
         }`}
       >

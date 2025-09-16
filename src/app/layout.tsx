@@ -111,6 +111,7 @@ export default function RootLayout({
                     width={160}
                     height={160}
                     className="rounded-md ring-1 ring-white/10"
+                    unoptimized
                     priority={false}
                   />
                 </div>
