@@ -16,7 +16,12 @@ export default function AppBar() {
   ] as const
 
   return (
-    <nav className="fixed bottom-4 left-0 right-0 z-50 md:hidden">
+    <nav
+      className="fixed left-0 right-0 z-50 md:hidden"
+      style={{
+        bottom: 'calc(16px + env(safe-area-inset-bottom, 0px))',
+      }}
+    >
       <div className="relative mx-auto w-[calc(100%-16px)] max-w-[1100px] px-0">
         <div
           className="h-20 rounded-[40px] ring-1 ring-white/10 [backdrop-filter:saturate(160%)_blur(24px)]"
@@ -41,10 +46,10 @@ export default function AppBar() {
                   key={item.id}
                   href={item.href}
                   className={clsx(
-                    'flex items-center justify-center rounded-full',
+                    'flex items-center justify-center rounded-full shrink-0',
                     // @ts-expect-error custom style
                     item.emphasized
-                      ? 'h-18 w-18 -mt-18 ring-1 ring-white/20 bg-white'
+                      ? 'h-16 w-16 -mt-12 ring-1 ring-white/20 bg-white'
                       : 'h-12 w-12',
                   )}
                 >
@@ -52,8 +57,8 @@ export default function AppBar() {
                     className={clsx(
                       // @ts-expect-error custom style
                       item.emphasized
-                        ? 'h-[30px] w-[30px]'
-                        : 'h-[26px] w-[26px]',
+                        ? 'h-[28px] w-[28px]'
+                        : 'h-[24px] w-[24px]',
                       isActive
                         ? '[color:var(--color-brand-green)]'
                         : // @ts-expect-error custom style

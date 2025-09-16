@@ -330,7 +330,7 @@ export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
         </button>
       </header>
 
-      <div className="relative w-full h-[48vh] md:h-[58vh]">
+      <div className="relative w-full h-[52vh] md:h-[58vh]">
         <div className="absolute inset-0 overflow-hidden">
           <div
             className="absolute h-full w-full"
@@ -366,14 +366,14 @@ export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
           </div>
         </div>
 
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent pointer-events-none z-10" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/0 pointer-events-none z-10" />
 
         <div className="absolute inset-0 p-4 md:p-6 flex flex-col justify-end pointer-events-none z-20">
-          <div className="text-white">
-            <h1 className="text-3xl md:text-5xl font-bold leading-tight">
+          <div className="text-white pr-8">
+            <h1 className="text-3xl md:text-5xl font-bold leading-tight break-words">
               {data.title}
             </h1>
-            <p className="text-white/80 mt-1">
+            <p className="text-white/80 mt-1 text-sm md:text-base">
               Рәсем {currentIndex + 1} / {data.images.length}
             </p>
           </div>

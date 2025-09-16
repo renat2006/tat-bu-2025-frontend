@@ -111,7 +111,15 @@ export default function LearnPage() {
   }, [activeToast, toastQueue])
 
   return (
-    <main className="min-h-screen pb-24 pt-4 px-4">
+    <main
+      className="min-h-screen pb-24 pt-4 px-4"
+      style={{
+        paddingTop: 'calc(16px + env(safe-area-inset-top, 0px))',
+        paddingBottom: 'calc(96px + env(safe-area-inset-bottom, 0px))',
+        paddingLeft: 'calc(16px + env(safe-area-inset-left, 0px))',
+        paddingRight: 'calc(16px + env(safe-area-inset-right, 0px))',
+      }}
+    >
       <div className="grid grid-cols-2 gap-2">
         {/* Hero banner simplified */}
         <Tile
