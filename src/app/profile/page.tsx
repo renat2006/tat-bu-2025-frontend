@@ -23,7 +23,13 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="bg-white/5 rounded-xl p-8 text-white">
+    <div
+      className="bg-white/5 rounded-xl p-8 text-white"
+      style={{
+        paddingTop: 'calc(24px + env(safe-area-inset-top, 0px))',
+        paddingBottom: 'calc(24px + env(safe-area-inset-bottom, 0px))',
+      }}
+    >
       <div className="flex items-center gap-6 mb-8">
         <div className="relative w-24 h-24">
           <Image
