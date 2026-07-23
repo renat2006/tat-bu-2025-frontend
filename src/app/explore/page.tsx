@@ -6,6 +6,7 @@ import Tile from '@/components/ui/Tile'
 import { Loader2, Volume2, Sparkles, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { useExploreStore } from '@/stores/exploreStore'
+import { API_ENDPOINTS } from '@/config/api'
 
 type Detection = {
   bbox?: [number, number, number, number]
@@ -226,7 +227,7 @@ export default function ExplorePage() {
     let aborted = false
     const fetchTT = async (ru: string) => {
       try {
-        const r = await fetch('https://vibe-tel.ddns.net/translate', {
+        const r = await fetch(API_ENDPOINTS.translate, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -266,7 +267,7 @@ export default function ExplorePage() {
     let aborted = false
     const fetchTT = async (ru: string) => {
       try {
-        const r = await fetch('https://vibe-tel.ddns.net/translate', {
+        const r = await fetch(API_ENDPOINTS.translate, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -319,7 +320,7 @@ export default function ExplorePage() {
       try {
         if (!text || isSpeaking) return
         setIsSpeaking(true)
-        const r = await fetch('https://vibe-tel.ddns.net/audio', {
+        const r = await fetch(API_ENDPOINTS.audio, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ text }),
@@ -415,7 +416,7 @@ export default function ExplorePage() {
         setError('')
         const form = new FormData()
         form.append('file', file)
-        const r = await fetch('https://vibe-tel.ddns.net/extract-objects', {
+        const r = await fetch(API_ENDPOINTS.extractObjects, {
           method: 'POST',
           body: form,
         })
@@ -495,7 +496,7 @@ export default function ExplorePage() {
       setIsGenerating(true)
       // 1-запрос: билингвальная генерация (RU + TT)
       const r = await fetch(
-        'https://vibe-tel.ddns.net/generate-sentence-bilingual',
+        API_ENDPOINTS.generateSentenceBilingual,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

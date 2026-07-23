@@ -4,6 +4,7 @@ import { useState, useRef } from 'react'
 import Tile from '@/components/ui/Tile'
 import { Camera, Upload, Loader2 } from 'lucide-react'
 import Image from 'next/image'
+import { API_ENDPOINTS } from '@/config/api'
 
 type ProcessImageResponse = {
   objects_ru: string[]
@@ -40,7 +41,7 @@ export default function ScanPage() {
       setLoading(true)
       const formData = new FormData()
       formData.append('file', file)
-      const res = await fetch('https://vibe-tel.ddns.net/process-image', {
+      const res = await fetch(API_ENDPOINTS.processImage, {
         method: 'POST',
         body: formData,
       })

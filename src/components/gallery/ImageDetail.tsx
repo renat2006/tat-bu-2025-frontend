@@ -17,6 +17,7 @@ import 'react-tooltip/dist/react-tooltip.css'
 import { Album } from '@/types/gallery'
 import { useIsAndroid } from '@/hooks/useIsAndroid'
 import { loadRuToTtMap } from '@/lib/words'
+import { API_ENDPOINTS } from '@/config/api'
 
 interface ImageDetailProps {
   data: Album
@@ -179,7 +180,7 @@ export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
     try {
       setGenLoading(true)
       setGenError(null)
-      const r = await fetch('https://vibe-tel.ddns.net/generate-album-memory', {
+      const r = await fetch(API_ENDPOINTS.generateAlbumMemory, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ objects, album_theme: data.title }),
@@ -215,7 +216,7 @@ export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
     if (!text || isSpeaking) return
     try {
       setIsSpeaking(true)
-      const r = await fetch('https://vibe-tel.ddns.net/audio', {
+      const r = await fetch(API_ENDPOINTS.audio, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text }),
@@ -247,7 +248,7 @@ export const ImageDetail = ({ data, onClose }: ImageDetailProps) => {
     else translation = maps.ttToRu[trimmed] || ''
     if (!translation) {
       try {
-        const r = await fetch('https://vibe-tel.ddns.net/translate', {
+        const r = await fetch(API_ENDPOINTS.translate, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
