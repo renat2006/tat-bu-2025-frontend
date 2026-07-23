@@ -6,6 +6,7 @@ import { markAchievement } from '@/lib/records'
 import { BookOpen, Sparkles, Shuffle, X, Loader2, Check } from 'lucide-react'
 import Tile from '@/components/ui/Tile'
 import { Volume2, Copy, Star, StarOff } from 'lucide-react'
+import { API_ENDPOINTS } from '@/config/api'
 
 export default function VocabPage() {
   const [ruWords, setRuWords] = useState<string[]>([])
@@ -67,7 +68,7 @@ export default function VocabPage() {
     let cancelled = false
     const fetchMissing = async (ru: string) => {
       try {
-        const r = await fetch('https://vibe-tel.ddns.net/translate', {
+        const r = await fetch(API_ENDPOINTS.translate, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -115,7 +116,7 @@ export default function VocabPage() {
     try {
       if (!text || isSpeaking) return
       setIsSpeaking(true)
-      const r = await fetch('https://vibe-tel.ddns.net/audio', {
+      const r = await fetch(API_ENDPOINTS.audio, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text }),
@@ -151,7 +152,7 @@ export default function VocabPage() {
     try {
       setIsGenerating(true)
       const r = await fetch(
-        'https://vibe-tel.ddns.net/generate-sentence-bilingual',
+        API_ENDPOINTS.generateSentenceBilingual,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
