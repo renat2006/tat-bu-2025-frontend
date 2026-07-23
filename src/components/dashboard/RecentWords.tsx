@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Tile from '@/components/ui/Tile'
+import { API_ENDPOINTS } from '@/config/api'
 
 export function RecentWords() {
   const [words, setWords] = useState<string[]>([])
@@ -40,7 +41,7 @@ export function RecentWords() {
       const missing = words.filter((ru) => !ruToTt[ru]).slice(0, 8)
       for (const ru of missing) {
         try {
-          const r = await fetch('https://vibe-tel.ddns.net/translate', {
+          const r = await fetch(API_ENDPOINTS.translate, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

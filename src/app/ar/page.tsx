@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Webcam from 'react-webcam'
 import Tile from '@/components/ui/Tile'
+import { API_ENDPOINTS } from '@/config/api'
 
 type Detection = {
   bbox?: [number, number, number, number]
@@ -59,7 +60,7 @@ export default function ARPage() {
     form.append('file', file)
     try {
       setProcessing(true)
-      const r = await fetch('https://vibe-tel.ddns.net/process-image', {
+      const r = await fetch(API_ENDPOINTS.processImage, {
         method: 'POST',
         body: form,
       })

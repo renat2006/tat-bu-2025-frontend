@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import BackToLearn from '@/components/ui/BackToLearn'
 import { Volume2, Shuffle, ChevronLeft, ChevronRight } from 'lucide-react'
+import { API_ENDPOINTS } from '@/config/api'
 
 type Card = { ru: string; tt: string }
 
@@ -33,7 +34,7 @@ export default function CardsPage() {
     if (!text || isSpeaking) return
     try {
       setIsSpeaking(true)
-      const r = await fetch('https://vibe-tel.ddns.net/audio', {
+      const r = await fetch(API_ENDPOINTS.audio, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text }),
